@@ -108,7 +108,21 @@
 
 .quick-icon.purple { background: #eeeaff; color: #7155e8; }
 .quick-icon.blue { background: #e8f3ff; color: #4286c7; }
+.quick-icon.orange { background: #fff2df; color: #df922d; }
 .quick-icon.green { background: #e6f7ef; color: #2cae7b; }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.new-button.secondary {
+  border: 1px solid #ddd5fb;
+  background: #fff;
+  color: #684ed6;
+  box-shadow: none;
+}
 
 .dash-grid-updated { grid-template-columns: 1.08fr .92fr; }
 .panel header .text-action { color: #6851d3; }
@@ -158,6 +172,9 @@
   .side-nav button { gap: 2px; }
   .side-nav button i { width: auto; height: auto; }
   .metrics-updated .metric { min-height: 100px; }
+  .page-header { align-items: flex-start; }
+  .header-actions { display: grid; gap: 6px; }
+  .header-actions .new-button { justify-content: center; padding: 9px 10px; font-size: 10px; }
 }
 
 .topbar-mobile-actions { display: flex; align-items: center; gap: 10px; }
@@ -295,4 +312,97 @@
   .mobile-menu-help b,
   .mobile-menu-help small { display: block; font-size: 10px; }
   .mobile-menu-help small { margin-top: 3px; color: #8b8894; }
+}
+
+.patient-registration {
+  width: min(680px, calc(100vw - 32px));
+  max-height: min(88dvh, 820px);
+  padding: 27px 30px;
+}
+
+.patient-registration .form-intro {
+  margin: 7px 0 20px;
+}
+
+.form-section {
+  padding: 16px;
+  border: 1px solid #eeeaf5;
+  border-radius: 10px;
+  background: #fdfcff;
+}
+
+.form-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.form-section-title b { font-size: 12px; }
+.form-section-title small { color: #7155e8; font-size: 10px; font-weight: 700; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+.form-grid .full { grid-column: 1 / -1; }
+.patient-registration label strong { color: #db5362; }
+
+.patient-registration select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px;
+  border: 1px solid #e4e3e8;
+  border-radius: 7px;
+  outline-color: #7155e8;
+  background: #fff;
+  color: #37343e;
+  font: 12px "DM Sans";
+}
+
+.appointment-form select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px;
+  border: 1px solid #e4e3e8;
+  border-radius: 7px;
+  outline-color: #7155e8;
+  background: #fff;
+  color: #37343e;
+  font: 12px "DM Sans";
+}
+
+.appointment-form label strong { color: #db5362; }
+
+.additional-details {
+  margin-top: 12px;
+  border: 1px solid #eeeaf5;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.additional-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  color: #514d5a;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.additional-details summary::-webkit-details-marker { display: none; }
+.additional-details summary::after { content: "+"; order: 3; margin-left: 9px; color: #7155e8; font-size: 17px; }
+.additional-details[open] summary::after { content: "−"; }
+.additional-details summary small { margin-left: auto; color: #9a97a1; font-size: 9px; font-weight: 400; }
+.additional-details .additional-fields { border: 0; border-top: 1px solid #eeeaf5; border-radius: 0; }
+.form-subtitle { margin: 19px 0 2px; color: #7259d9; font-size: 10px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+
+@media (max-width: 600px) {
+  .patient-registration { width: min(100%, calc(100vw - 20px)); max-height: 88dvh; padding: 24px 17px; }
+  .form-section { padding: 13px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid .full { grid-column: auto; }
+  .additional-details summary { align-items: flex-start; gap: 8px; }
+  .additional-details summary small { margin-left: 0; }
 }
