@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { PatientsWorkspace } from "./patients-workspace";
 import "./dashboard.css";
 import "./live.css";
 import "./mobile-fix.css";
@@ -62,7 +63,7 @@ export default function Dashboard() {
       if (!membership) return router.replace("/onboarding");
       const { data: clinic, error: clinicError } = await supabase.from("clinics").select("id,name").eq("id", membership.clinic_id).single();
       if (clinicError || !clinic) throw clinicError || Error("Clínica não encontrada.");
-      const { data: patientRows, error: patientError } = await supabase.from("patients").select("id,full_name,phone,email,preferred_name,birth_date,created_at").eq("clinic_id", clinic.id).order("created_at", { ascending: false });
+      const { data: patientRows, error: patientError } = await supabase.from("patients").select("id,full_name,phone,email,preferred_name,birth_date,cpf,city,state,notes,created_at").eq("clinic_id", clinic.id).order("created_at", { ascending: false });
       if (patientError) throw patientError;
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const end = new Date(start); end.setDate(end.getDate() + 1);
@@ -89,8 +90,8 @@ export default function Dashboard() {
     <section className="dashboard">
       <header className="topbar"><div className="mobile-brand"><span className="brand-mark">M</span> medix</div><div className="search">⌕ <input placeholder="Buscar pacientes..." /></div><div className="topbar-mobile-actions"><button className="mobile-menu-trigger" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}><Icon name="menu" /></button><button className="profile"><span>{initials(workspace.user)}</span><b>{workspace.user}<small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></b></button></div></header>
       <div className="content">
-        <div className="page-header"><div><p>{new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p><h1>{page === "Visão geral" ? <>Olá, {workspace.user.split(" ")[0]} <span>✦</span></> : page}</h1></div><div className="header-actions"><button className="new-button secondary" onClick={() => setNewPatient(true)}><Icon name="plus" size={16} /> Novo paciente</button><button className="new-button" onClick={() => setNewAppointment(true)}><Icon name="calendar" size={16} /> Novo agendamento</button></div></div>
-        {page === "Visão geral" ? <Overview patients={patients} appointments={appointments} openPatient={() => setNewPatient(true)} openAppointment={() => setNewAppointment(true)} goPatients={() => setPage("Pacientes")} refresh={refresh} refreshing={refreshing} /> : page === "Pacientes" ? <PatientList patients={patients} /> : <section className="panel coming"><span>✦</span><h2>{page}</h2><p>Este módulo será retomado depois.</p></section>}
+        <div className="page-header"><div>{page === "Visão geral" ? <><p className="workspace-label"><span>{workspace.name}</span> · {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p><h1>Olá, {workspace.user.split(" ")[0]} <span>✦</span></h1><small className="workspace-welcome">Você está na visão geral de <b>{workspace.name}</b>.</small></> : <><p>{workspace.name}</p><h1>{page}</h1></>}</div><div className="header-actions"><button className="new-button secondary" onClick={() => setNewPatient(true)}><Icon name="plus" size={16} /> Novo paciente</button><button className="new-button" onClick={() => setNewAppointment(true)}><Icon name="calendar" size={16} /> Novo agendamento</button></div></div>
+        {page === "Visão geral" ? <Overview patients={patients} appointments={appointments} openPatient={() => setNewPatient(true)} openAppointment={() => setNewAppointment(true)} goPatients={() => setPage("Pacientes")} refresh={refresh} refreshing={refreshing} /> : page === "Pacientes" ? <PatientsWorkspace clinic={workspace.id} patients={patients} onNew={() => setNewPatient(true)} onReload={load} /> : <section className="panel coming"><span>✦</span><h2>{page}</h2><p>Este módulo será retomado depois.</p></section>}
       </div>
     </section>
     <div className={"mobile-menu-layer " + (mobileMenuOpen ? "is-open" : "")} aria-hidden={!mobileMenuOpen}>

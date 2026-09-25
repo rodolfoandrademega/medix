@@ -117,6 +117,27 @@
   gap: 9px;
 }
 
+.workspace-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: capitalize;
+}
+
+.workspace-label span {
+  color: #7054e6;
+  font-weight: 800;
+}
+
+.workspace-welcome {
+  display: block;
+  margin-top: 7px;
+  color: #918e98;
+  font-size: 11px;
+}
+
+.workspace-welcome b { color: #615d69; font-weight: 700; }
+
 .new-button.secondary {
   border: 1px solid #ddd5fb;
   background: #fff;
@@ -175,6 +196,7 @@
   .page-header { align-items: flex-start; }
   .header-actions { display: grid; gap: 6px; }
   .header-actions .new-button { justify-content: center; padding: 9px 10px; font-size: 10px; }
+  .workspace-welcome { max-width: 190px; font-size: 10px; }
 }
 
 .topbar-mobile-actions { display: flex; align-items: center; gap: 10px; }
