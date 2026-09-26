@@ -1,5 +1,7 @@
 import Link from "next/link";
 import Faq from "./components/Faq";
+import "./globals.css";
+import "./mobile.css";
 import "./landing-extra.css";
 
 const Check = () => <span className="check">✓</span>;

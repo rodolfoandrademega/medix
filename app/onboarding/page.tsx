@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
+import "../globals.css";
+import "../mobile.css";
 import "../auth/auth.css";
 
 const slugify = (value:string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -24,9 +26,10 @@ export default function Onboarding() {
       const { data:{ user }, error:userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       if (!user) { router.replace("/auth"); return; }
-      const { data, error } = await supabase.from("clinic_members").select("clinic_id").eq("user_id", user.id).limit(1).maybeSingle();
+      const { data, error } = await supabase.rpc("current_workspace");
       if (error) throw error;
-      if (data?.clinic_id) { router.replace("/dashboard"); return; }
+      const workspace = data?.[0];
+      if (workspace?.clinic_id) { router.replace(workspace.clinic_status === "active" ? "/dashboard" : "/pending-approval"); return; }
     } catch (error) { setFeedback(errorText(error)); }
     finally { setLoading(false); }
   }
@@ -36,7 +39,7 @@ export default function Onboarding() {
       if (!supabase) throw new Error("A conexão com o Supabase não foi encontrada.");
       const { error } = await supabase.rpc("create_clinic_with_owner", { clinic_name:name, clinic_slug:slug });
       if (error) throw error;
-      router.replace("/dashboard");
+      router.replace("/pending-approval");
     } catch (error) { setFeedback(errorText(error)); setSaving(false); }
   }
   if (loading) return <main className="loading-screen"><span className="brand-mark">M</span><p>Preparando sua Medix...</p></main>;
