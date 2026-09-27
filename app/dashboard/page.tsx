@@ -5,6 +5,9 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { PatientsWorkspace } from "./patients-workspace";
+import { ProceduresWorkspace, type Procedure } from "./procedures-workspace";
+import { AgendaWorkspace } from "./agenda-workspace";
+import { TeamWorkspace } from "./team-workspace";
 import "../globals.css";
 import "../mobile.css";
 import "./dashboard.css";
@@ -14,14 +17,19 @@ import "./overview-enhancements.css";
 
 type Patient = { id: string; full_name: string; phone: string | null; email: string | null; created_at?: string; preferred_name?: string | null; birth_date?: string | null };
 type Appointment = { id: string; patient_id: string; starts_at: string; status: string };
-type Workspace = { id: string; name: string; role: string; user: string };
+type ModuleKey = "overview" | "agenda" | "patients" | "procedures" | "team" | "financial" | "reports";
+type Modules = Record<ModuleKey, boolean>;
+type Permissions = Record<"patients"|"anamnesis"|"records"|"history"|"agenda"|"procedures"|"team"|"financial"|"reports", boolean>;
+type Workspace = { id: string; name: string; role: string; user: string; modules: Modules; permissions: Permissions; alert: { title: string; message: string; level: string } | null; refreshRequestedAt: string };
 type IconName = "home" | "calendar" | "users" | "team" | "wallet" | "chart" | "plus" | "refresh" | "arrow" | "clock" | "spark" | "menu" | "close";
 
 const initials = (value: string) => value.split(" ").map((word) => word[0]).slice(0, 2).join("").toUpperCase() || "M";
-const navItems: { label: string; icon: IconName }[] = [
-  { label: "Visão geral", icon: "home" }, { label: "Agenda", icon: "calendar" },
-  { label: "Pacientes", icon: "users" }, { label: "Colaboradores", icon: "team" },
-  { label: "Financeiro", icon: "wallet" }, { label: "Relatórios", icon: "chart" },
+const moduleDefaults: Modules = { overview: true, agenda: true, patients: true, procedures: true, team: true, financial: true, reports: true };
+const permissionDefaults: Permissions = { patients: true, anamnesis: true, records: true, history: true, agenda: true, procedures: true, team: false, financial: false, reports: false };
+const navItems: { label: string; icon: IconName; module: ModuleKey }[] = [
+  { label: "Visão geral", icon: "home", module: "overview" }, { label: "Agenda", icon: "calendar", module: "agenda" },
+  { label: "Pacientes", icon: "users", module: "patients" }, { label: "Procedimentos", icon: "spark", module: "procedures" }, { label: "Colaboradores", icon: "team", module: "team" },
+  { label: "Financeiro", icon: "wallet", module: "financial" }, { label: "Relatórios", icon: "chart", module: "reports" },
 ];
 
 function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
@@ -52,6 +60,7 @@ export default function Dashboard() {
   const [newAppointment, setNewAppointment] = useState(false);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [platformRefreshAvailable, setPlatformRefreshAvailable] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   async function load() {
@@ -71,7 +80,14 @@ export default function Dashboard() {
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const end = new Date(start); end.setDate(end.getDate() + 1);
       const { data: appointmentRows } = await supabase.from("appointments").select("id,patient_id,starts_at,status").eq("clinic_id", clinic.id).gte("starts_at", start.toISOString()).lt("starts_at", end.toISOString()).order("starts_at");
-      setWorkspace({ id: clinic.id, name: clinic.name, role: membership.member_role, user: user.user_metadata.full_name || user.email || "" });
+      const modules = { ...moduleDefaults, ...(membership.enabled_modules || {}) } as Modules;
+      const permissions = { ...permissionDefaults, ...(membership.member_permissions || {}) } as Permissions;
+      const alert = membership.admin_alert_title && membership.admin_alert_message ? { title: membership.admin_alert_title, message: membership.admin_alert_message, level: membership.admin_alert_level || "info" } : null;
+      const release = membership.refresh_requested_at as string;
+      const storedRelease = window.sessionStorage.getItem("medix-platform-release");
+      if (storedRelease && storedRelease !== release) setPlatformRefreshAvailable(true);
+      if (!storedRelease) window.sessionStorage.setItem("medix-platform-release", release);
+      setWorkspace({ id: clinic.id, name: clinic.name, role: membership.member_role, user: user.user_metadata.full_name || user.email || "", modules, permissions, alert, refreshRequestedAt: membership.refresh_requested_at });
       setPatients((patientRows || []) as Patient[]);
       setAppointments((appointmentRows || []) as Appointment[]);
     } catch (caught) {
@@ -79,22 +95,29 @@ export default function Dashboard() {
     } finally { setRefreshing(false); }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); const timer = window.setInterval(load, 120000); return () => window.clearInterval(timer); }, []);
   const refresh = () => { setRefreshing(true); load(); };
+  async function signOut() {
+    await supabase?.auth.signOut();
+    router.replace("/auth");
+  }
   if (!workspace) return <main className="loading-screen"><span className="brand-mark">M</span><p>{error || "Carregando sua clínica..."}</p>{error && <button className="button" onClick={load}>Tentar novamente</button>}</main>;
 
+  const visibleNavItems = navItems.filter((item) => workspace.modules[item.module] && (item.module === "overview" || workspace.permissions[item.module as keyof Permissions] !== false));
+  const can = (module: ModuleKey) => workspace.modules[module] && (module === "overview" || workspace.permissions[module as keyof Permissions] !== false);
   return <main className="app-shell">
     <aside className="sidebar">
       <Link href="/" className="brand side-brand"><span className="brand-mark">M</span> medix</Link>
       <div className="clinic-switch"><span className="clinic-avatar">{initials(workspace.name)}</span><div><b>{workspace.name}</b><small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></div></div>
-      <nav className="side-nav">{navItems.map((item) => <button key={item.label} className={page === item.label ? "selected" : ""} onClick={() => setPage(item.label)}><i><Icon name={item.icon} /></i><span>{item.label}</span></button>)}</nav>
-      <div className="side-bottom"><div className="help"><span>?</span><div><b>Central de ajuda</b><small>Precisa de suporte?</small></div></div></div>
+      <nav className="side-nav">{visibleNavItems.map((item) => <button key={item.label} className={page === item.label ? "selected" : ""} onClick={() => setPage(item.label)}><i><Icon name={item.icon} /></i><span>{item.label}</span></button>)}</nav>
+      <div className="side-bottom"><div className="help"><span>?</span><div><b>Central de ajuda</b><small>Precisa de suporte?</small></div></div><button className="logout-button" onClick={signOut}>Sair da conta <span>→</span></button></div>
     </aside>
     <section className="dashboard">
       <header className="topbar"><div className="mobile-brand"><span className="brand-mark">M</span> medix</div><div className="search">⌕ <input placeholder="Buscar pacientes..." /></div><div className="topbar-mobile-actions"><button className="mobile-menu-trigger" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}><Icon name="menu" /></button><button className="profile"><span>{initials(workspace.user)}</span><b>{workspace.user}<small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></b></button></div></header>
+      {platformRefreshAvailable && <div className="platform-refresh"><span>Uma atualização da Medix está disponível.</span><button onClick={() => { window.sessionStorage.setItem("medix-platform-release", workspace.refreshRequestedAt); window.location.reload(); }}>Atualizar agora</button></div>}
       <div className="content">
-        <div className="page-header"><div>{page === "Visão geral" ? <><p className="workspace-label"><span>{workspace.name}</span> · {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p><h1>Olá, {workspace.user.split(" ")[0]} <span>✦</span></h1><small className="workspace-welcome">Você está na visão geral de <b>{workspace.name}</b>.</small></> : <><p>{workspace.name}</p><h1>{page}</h1></>}</div><div className="header-actions"><button className="new-button secondary" onClick={() => setNewPatient(true)}><Icon name="plus" size={16} /> Novo paciente</button><button className="new-button" onClick={() => setNewAppointment(true)}><Icon name="calendar" size={16} /> Novo agendamento</button></div></div>
-        {page === "Visão geral" ? <Overview patients={patients} appointments={appointments} openPatient={() => setNewPatient(true)} openAppointment={() => setNewAppointment(true)} goPatients={() => setPage("Pacientes")} refresh={refresh} refreshing={refreshing} /> : page === "Pacientes" ? <PatientsWorkspace clinic={workspace.id} patients={patients} onNew={() => setNewPatient(true)} onReload={load} /> : <section className="panel coming"><span>✦</span><h2>{page}</h2><p>Este módulo será retomado depois.</p></section>}
+        {page !== "Pacientes" && page !== "Procedimentos" && page !== "Agenda" && page !== "Colaboradores" && <div className="page-header"><div>{page === "Visão geral" ? <><p className="workspace-label"><span>{workspace.name}</span> · {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p><h1>Olá, {workspace.user.split(" ")[0]} <span>✦</span></h1><small className="workspace-welcome">Você está na visão geral de <b>{workspace.name}</b>.</small></> : <><p>{workspace.name}</p><h1>{page}</h1></>}</div>{page !== "Visão geral" && <div className="header-actions">{can("patients") && <button className="new-button secondary" onClick={() => setNewPatient(true)}><Icon name="plus" size={16} /> Novo paciente</button>}{can("agenda") && <button className="new-button" onClick={() => setNewAppointment(true)}><Icon name="calendar" size={16} /> Novo agendamento</button>}</div>}</div>}
+        {page === "Visão geral" ? <Overview patients={patients} appointments={appointments} alert={workspace.alert} openPatient={() => setNewPatient(true)} openAppointment={() => setNewAppointment(true)} goPatients={() => setPage("Pacientes")} refresh={refresh} refreshing={refreshing} canPatients={can("patients")} canAgenda={can("agenda")} /> : page === "Agenda" && can("agenda") ? <AgendaWorkspace clinic={workspace.id} onNew={() => setNewAppointment(true)} /> : page === "Pacientes" && can("patients") ? <PatientsWorkspace clinic={workspace.id} patients={patients} onNew={() => setNewPatient(true)} onReload={load} permissions={workspace.permissions} /> : page === "Procedimentos" && can("procedures") ? <ProceduresWorkspace clinic={workspace.id} /> : page === "Colaboradores" && can("team") ? <TeamWorkspace /> : <section className="panel coming"><span>✦</span><h2>{page}</h2><p>Este módulo não está liberado para esta clínica.</p></section>}
       </div>
     </section>
     <div className={"mobile-menu-layer " + (mobileMenuOpen ? "is-open" : "")} aria-hidden={!mobileMenuOpen}>
@@ -102,8 +125,8 @@ export default function Dashboard() {
       <section className="mobile-menu-drawer">
         <div className="mobile-menu-head"><div className="brand"><span className="brand-mark">M</span> medix</div><button aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)}><Icon name="close" /></button></div>
         <div className="mobile-clinic"><span className="clinic-avatar">{initials(workspace.name)}</span><div><b>{workspace.name}</b><small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></div></div>
-        <nav>{navItems.map((item) => <button key={item.label} className={page === item.label ? "selected" : ""} onClick={() => { setPage(item.label); setMobileMenuOpen(false); }}><Icon name={item.icon} /><span>{item.label}</span></button>)}</nav>
-        <div className="mobile-menu-help"><span>?</span><div><b>Central de ajuda</b><small>Precisa de suporte?</small></div></div>
+        <nav>{visibleNavItems.map((item) => <button key={item.label} className={page === item.label ? "selected" : ""} onClick={() => { setPage(item.label); setMobileMenuOpen(false); }}><Icon name={item.icon} /><span>{item.label}</span></button>)}</nav>
+        <div className="mobile-menu-help"><span>?</span><div><b>Central de ajuda</b><small>Precisa de suporte?</small></div></div><button className="mobile-logout-button" onClick={signOut}>Sair da conta <span>→</span></button>
       </section>
     </div>
     {newPatient && <PatientForm clinic={workspace.id} close={() => setNewPatient(false)} done={() => { setNewPatient(false); load(); }} />}
@@ -111,21 +134,37 @@ export default function Dashboard() {
   </main>;
 }
 
-function Overview({ patients, appointments, openPatient, openAppointment, goPatients, refresh, refreshing }: { patients: Patient[]; appointments: Appointment[]; openPatient: () => void; openAppointment: () => void; goPatients: () => void; refresh: () => void; refreshing: boolean }) {
+function Overview({ patients, appointments, alert, openPatient, openAppointment, goPatients, refresh, refreshing, canPatients, canAgenda }: { patients: Patient[]; appointments: Appointment[]; alert: { title: string; message: string; level: string } | null; openPatient: () => void; openAppointment: () => void; goPatients: () => void; refresh: () => void; refreshing: boolean; canPatients: boolean; canAgenda: boolean }) {
   const confirmed = appointments.filter((appointment) => appointment.status === "confirmed").length;
   const appointmentNote = appointments.length ? confirmed + " confirmada" + (confirmed === 1 ? "" : "s") : "Agenda disponível";
   const appointmentText = appointments.length ? appointments.length + " atendimento" + (appointments.length === 1 ? "" : "s") + " programado" + (appointments.length === 1 ? "" : "s") : "Organize os próximos atendimentos.";
   return <>
+    {alert && <ClinicAlert alert={alert} />}
     <section className="metrics metrics-updated">
       <Metric icon="calendar" tone="purple" label="Consultas hoje" value={String(appointments.length)} note={appointmentNote} />
       <Metric icon="users" tone="orange" label="Pacientes ativos" value={String(patients.length)} note={patients.length ? "Base da sua clínica" : "Comece cadastrando"} />
       <Metric icon="clock" tone="green" label="Próximo atendimento" value={appointments[0] ? new Date(appointments[0].starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Livre"} note={appointments[0] ? "Hoje" : "Sem consultas"} />
       <Metric icon="chart" tone="blue" label="Resumo financeiro" value="—" note="Em breve" />
     </section>
-    <section className="quick-actions"><div><p className="section-kicker">AÇÕES RÁPIDAS</p><h2>O que você precisa fazer hoje?</h2></div><div className="quick-action-buttons"><button onClick={openAppointment}><span className="quick-icon purple"><Icon name="calendar" /></span><span><b>Novo agendamento</b><small>Reserve um horário</small></span><Icon name="arrow" size={16} /></button><button onClick={openPatient}><span className="quick-icon blue"><Icon name="plus" /></span><span><b>Novo paciente</b><small>Crie um cadastro</small></span><Icon name="arrow" size={16} /></button><button onClick={goPatients}><span className="quick-icon orange"><Icon name="users" /></span><span><b>Ver pacientes</b><small>Acesse os cadastros</small></span><Icon name="arrow" size={16} /></button><button onClick={refresh}><span className="quick-icon green"><Icon name="refresh" /></span><span><b>{refreshing ? "Atualizando..." : "Atualizar painel"}</b><small>Consulte novos dados</small></span><Icon name="arrow" size={16} /></button></div></section>
+    <section className="quick-actions"><div><p className="section-kicker">AÇÕES RÁPIDAS</p><h2>O que você precisa fazer hoje?</h2></div><div className="quick-action-buttons">
+      {canAgenda && <button onClick={openAppointment}><span className="quick-icon purple"><Icon name="calendar" /></span><span><b>Novo agendamento</b><small>Reserve um horário</small></span><Icon name="arrow" size={16} /></button>}
+      {canPatients && <><button onClick={openPatient}><span className="quick-icon blue"><Icon name="plus" /></span><span><b>Novo paciente</b><small>Crie um cadastro</small></span><Icon name="arrow" size={16} /></button><button onClick={goPatients}><span className="quick-icon orange"><Icon name="users" /></span><span><b>Ver pacientes</b><small>Acesse os cadastros</small></span><Icon name="arrow" size={16} /></button></>}
+      <button onClick={refresh}><span className="quick-icon green"><Icon name="refresh" /></span><span><b>{refreshing ? "Atualizando..." : "Atualizar painel"}</b><small>Consulte novos dados</small></span><Icon name="arrow" size={16} /></button>
+    </div></section>
     <div className="dash-grid dash-grid-updated"><section className="panel"><header><div><p className="section-kicker">AGENDA</p><h2>Consultas de hoje</h2><p>{appointmentText}</p></div><button className="text-action">Ver agenda <Icon name="arrow" size={14} /></button></header><TodayAppointments appointments={appointments} patients={patients} /></section><section className="panel insights-panel"><header><div><p className="section-kicker">PANORAMA</p><h2>Sua clínica em foco</h2><p>Acompanhe os próximos passos.</p></div></header><div className="insight-list"><div><span className="insight-icon"><Icon name="spark" size={16} /></span><p><b>{patients.length ? "Cadastros atualizados" : "Comece por aqui"}</b><small>{patients.length ? "Use os dados para manter a agenda organizada." : "Cadastre seu primeiro paciente para iniciar."}</small></p></div><div><span className="insight-icon neutral"><Icon name="calendar" size={16} /></span><p><b>{appointments.length ? "Agenda em andamento" : "Dia livre"}</b><small>{appointments.length ? "Confira seus horários antes do próximo atendimento." : "Inclua uma consulta quando estiver pronto."}</small></p></div></div></section></div>
     <section className="panel patients-panel"><header><div><p className="section-kicker">PACIENTES</p><h2>Cadastros recentes</h2><p>Últimos pacientes adicionados à clínica</p></div><button onClick={goPatients} className="text-action">Ver todos <Icon name="arrow" size={14} /></button></header><PatientRows patients={patients.slice(0, 4)} /></section>
   </>;
+}
+
+function ClinicAlert({ alert }: { alert: { title: string; message: string; level: string } }) {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+  const levelLabel = alert.level === "important" ? "Comunicado importante" : alert.level === "warning" ? "Atenção necessária" : "Comunicado da Medix";
+  return <section className={`clinic-alert ${alert.level}`} role="status">
+    <span className="clinic-alert-icon">{alert.level === "important" ? "!" : "✦"}</span>
+    <div className="clinic-alert-copy"><small>{levelLabel}</small><b>{alert.title}</b><p>{alert.message}</p></div>
+    <button type="button" onClick={() => setDismissed(true)}>Entendi</button>
+  </section>;
 }
 
 function Metric({ icon, tone, label, value, note }: { icon: IconName; tone: string; label: string; value: string; note: string }) { return <article className="metric"><span className={"metric-icon " + tone}><Icon name={icon} /></span><div><p>{label}</p><h2>{value}</h2><em>{note}</em></div></article>; }
@@ -205,8 +244,12 @@ function AppointmentForm({ clinic, patients, close, done }: { clinic: string; pa
   const [patientId, setPatientId] = useState("");
   const [startsAt, setStartsAt] = useState(initialDate.toISOString().slice(0, 16));
   const [notes, setNotes] = useState("");
+  const [procedures, setProcedures] = useState<Procedure[]>([]);
+  const [procedureId, setProcedureId] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => { void (async () => { const { data } = await supabase!.from("procedures").select("id,name,category,description,internal_code,duration_minutes,price,color,active,created_at").eq("clinic_id", clinic).eq("active", true).order("name"); setProcedures((data || []) as Procedure[]); })(); }, [clinic]);
 
   async function save(event: FormEvent) {
     event.preventDefault();
@@ -214,10 +257,12 @@ function AppointmentForm({ clinic, patients, close, done }: { clinic: string; pa
     setSaving(true);
     setError("");
     const start = new Date(startsAt);
-    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const procedure = procedures.find((item) => item.id === procedureId);
+    const duration = procedure?.duration_minutes || 30;
+    const end = new Date(start.getTime() + duration * 60 * 1000);
     const { error: insertError } = await supabase!.from("appointments").insert({
       clinic_id: clinic, patient_id: patientId, starts_at: start.toISOString(), ends_at: end.toISOString(),
-      status: "scheduled", notes: notes.trim() || null, duration_minutes: 30,
+      status: "scheduled", notes: notes.trim() || null, duration_minutes: duration, procedure_id: procedureId || null,
     });
     setSaving(false);
     if (insertError) setError(insertError.message); else done();
@@ -231,6 +276,7 @@ function AppointmentForm({ clinic, patients, close, done }: { clinic: string; pa
       <p>Reserve um horário de 30 minutos. Você poderá adicionar procedimentos na próxima etapa da agenda.</p>
       {!patients.length ? <div className="auth-feedback">Cadastre um paciente antes de criar um agendamento.</div> : <>
         <label>Paciente <strong>*</strong><select required value={patientId} onChange={(event) => setPatientId(event.target.value)}><option value="">Selecione um paciente</option>{patients.map((patient) => <option key={patient.id} value={patient.id}>{patient.full_name}</option>)}</select></label>
+        <label>Procedimento <small>Opcional</small><select value={procedureId} onChange={(event) => setProcedureId(event.target.value)}><option value="">Sem procedimento definido</option>{procedures.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.duration_minutes} min{item.price !== null ? ` · R$ ${Number(item.price).toFixed(2).replace(".", ",")}` : ""}</option>)}</select></label>
         <label>Data e horário <strong>*</strong><input required type="datetime-local" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} /></label>
         <label>Observações <small>Opcional</small><input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex.: primeira consulta" /></label>
         {error && <div className="auth-feedback">{error}</div>}
