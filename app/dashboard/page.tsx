@@ -103,8 +103,11 @@ export default function Dashboard() {
   }
   if (!workspace) return <main className="loading-screen"><span className="brand-mark">M</span><p>{error || "Carregando sua clínica..."}</p>{error && <button className="button" onClick={load}>Tentar novamente</button>}</main>;
 
-  const visibleNavItems = navItems.filter((item) => workspace.modules[item.module] && (item.module === "overview" || workspace.permissions[item.module as keyof Permissions] !== false));
-  const can = (module: ModuleKey) => workspace.modules[module] && (module === "overview" || workspace.permissions[module as keyof Permissions] !== false);
+  // O super admin libera o módulo para a clínica; o proprietário sempre pode administrá-lo.
+  // Para os demais colaboradores, a permissão individual continua sendo obrigatória.
+  const canAccess = (module: ModuleKey) => module === "overview" || workspace.role === "owner" || workspace.permissions[module as keyof Permissions] !== false;
+  const visibleNavItems = navItems.filter((item) => workspace.modules[item.module] && canAccess(item.module));
+  const can = (module: ModuleKey) => workspace.modules[module] && canAccess(module);
   return <main className="app-shell">
     <aside className="sidebar">
       <Link href="/" className="brand side-brand"><span className="brand-mark">M</span> medix</Link>
