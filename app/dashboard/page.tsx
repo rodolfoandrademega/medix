@@ -8,6 +8,7 @@ import { PatientsWorkspace } from "./patients-workspace";
 import { ProceduresWorkspace, type Procedure } from "./procedures-workspace";
 import { AgendaWorkspace } from "./agenda-workspace";
 import { TeamWorkspace } from "./team-workspace";
+import { AppointmentNotifications } from "./appointment-notifications";
 import "../globals.css";
 import "../mobile.css";
 import "./dashboard.css";
@@ -120,7 +121,7 @@ export default function Dashboard() {
       <div className="side-bottom"><div className="help"><span>?</span><div><b>Central de ajuda</b><small>Precisa de suporte?</small></div></div><button className="logout-button" onClick={signOut}>Sair da conta <span>→</span></button></div>
     </aside>
     <section className="dashboard">
-      <header className="topbar"><div className="mobile-brand"><span className="brand-mark">M</span> medix</div><div className="search">⌕ <input placeholder="Buscar pacientes..." /></div><div className="topbar-mobile-actions"><button className="mobile-menu-trigger" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}><Icon name="menu" /></button><button className="profile"><span>{initials(workspace.user)}</span><b>{workspace.user}<small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></b></button></div></header>
+      <header className="topbar"><div className="mobile-brand"><span className="brand-mark">M</span> medix</div><div className="search">⌕ <input placeholder="Buscar pacientes..." /></div><div className="topbar-mobile-actions"><AppointmentNotifications clinic={workspace.id} /><button className="mobile-menu-trigger" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}><Icon name="menu" /></button><button className="profile"><span>{initials(workspace.user)}</span><b>{workspace.user}<small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></b></button></div></header>
       {platformRefreshAvailable && <div className="platform-refresh"><span>Uma atualização da Medix está disponível.</span><button onClick={() => { window.sessionStorage.setItem("medix-platform-release", workspace.refreshRequestedAt); window.location.reload(); }}>Atualizar agora</button></div>}
       <div className="content">
         {page !== "Pacientes" && page !== "Procedimentos" && page !== "Agenda" && page !== "Colaboradores" && <div className="page-header"><div>{page === "Visão geral" ? <><p className="workspace-label"><span>{workspace.name}</span> · {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p><h1>Olá, {workspace.user.split(" ")[0]} <span>✦</span></h1><small className="workspace-welcome">Você está na visão geral de <b>{workspace.name}</b>.</small></> : <><p>{workspace.name}</p><h1>{page}</h1></>}</div>{page !== "Visão geral" && <div className="header-actions">{can("patients") && <button className="new-button secondary" onClick={() => setNewPatient(true)}><Icon name="plus" size={16} /> Novo paciente</button>}{can("agenda") && <button className="new-button" onClick={() => setNewAppointment(true)}><Icon name="calendar" size={16} /> Novo agendamento</button>}</div>}</div>}

@@ -5,6 +5,8 @@ import "./mobile.css";
 export const metadata: Metadata = {
   title: "Medix | Gestão inteligente para clínicas",
   description: "A plataforma que organiza o cuidado da sua clínica.",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon", apple: "/apple-icon" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
