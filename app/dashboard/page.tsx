@@ -14,13 +14,14 @@ import "./dashboard.css";
 import "./live.css";
 import "./mobile-fix.css";
 import "./overview-enhancements.css";
+import "./sidebar-collapse.css";
 
 type Patient = { id: string; full_name: string; phone: string | null; email: string | null; created_at?: string; preferred_name?: string | null; birth_date?: string | null };
 type Appointment = { id: string; patient_id: string; starts_at: string; status: string };
 type ModuleKey = "overview" | "agenda" | "patients" | "procedures" | "team" | "financial" | "reports";
 type Modules = Record<ModuleKey, boolean>;
 type Permissions = Record<"patients"|"anamnesis"|"records"|"history"|"agenda"|"procedures"|"team"|"financial"|"reports", boolean>;
-type Workspace = { id: string; name: string; role: string; user: string; modules: Modules; permissions: Permissions; alert: { title: string; message: string; level: string } | null; refreshRequestedAt: string };
+type Workspace = { id: string; name: string; role: string; user: string; modules: Modules; permissions: Permissions; alert: { title: string; message: string; level: string } | null; memberAlert: { title: string; message: string; level: string } | null; refreshRequestedAt: string };
 type IconName = "home" | "calendar" | "users" | "team" | "wallet" | "chart" | "plus" | "refresh" | "arrow" | "clock" | "spark" | "menu" | "close";
 
 const initials = (value: string) => value.split(" ").map((word) => word[0]).slice(0, 2).join("").toUpperCase() || "M";
@@ -62,6 +63,7 @@ export default function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [platformRefreshAvailable, setPlatformRefreshAvailable] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   async function load() {
     try {
@@ -75,7 +77,7 @@ export default function Dashboard() {
       if (!membership) return router.replace("/onboarding");
       if (membership.clinic_status !== "active") return router.replace("/pending-approval");
       const clinic = { id: membership.clinic_id, name: membership.clinic_name };
-      const { data: patientRows, error: patientError } = await supabase.from("patients").select("id,full_name,phone,email,preferred_name,birth_date,cpf,city,state,notes,created_at").eq("clinic_id", clinic.id).order("created_at", { ascending: false });
+      const { data: patientRows, error: patientError } = await supabase.from("patients").select("id,full_name,phone,email,preferred_name,birth_date,cpf,gender,occupation,address,address_number,address_complement,neighborhood,city,state,postal_code,emergency_contact_name,emergency_contact_phone,referred_by,notes,created_at").eq("clinic_id", clinic.id).order("created_at", { ascending: false });
       if (patientError) throw patientError;
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const end = new Date(start); end.setDate(end.getDate() + 1);
@@ -83,11 +85,12 @@ export default function Dashboard() {
       const modules = { ...moduleDefaults, ...(membership.enabled_modules || {}) } as Modules;
       const permissions = { ...permissionDefaults, ...(membership.member_permissions || {}) } as Permissions;
       const alert = membership.admin_alert_title && membership.admin_alert_message ? { title: membership.admin_alert_title, message: membership.admin_alert_message, level: membership.admin_alert_level || "info" } : null;
+      const memberAlert = membership.member_alert_title && membership.member_alert_message ? { title: membership.member_alert_title, message: membership.member_alert_message, level: membership.member_alert_level || "info" } : null;
       const release = membership.refresh_requested_at as string;
       const storedRelease = window.sessionStorage.getItem("medix-platform-release");
       if (storedRelease && storedRelease !== release) setPlatformRefreshAvailable(true);
       if (!storedRelease) window.sessionStorage.setItem("medix-platform-release", release);
-      setWorkspace({ id: clinic.id, name: clinic.name, role: membership.member_role, user: user.user_metadata.full_name || user.email || "", modules, permissions, alert, refreshRequestedAt: membership.refresh_requested_at });
+      setWorkspace({ id: clinic.id, name: clinic.name, role: membership.member_role, user: user.user_metadata.full_name || user.email || "", modules, permissions, alert, memberAlert, refreshRequestedAt: membership.refresh_requested_at });
       setPatients((patientRows || []) as Patient[]);
       setAppointments((appointmentRows || []) as Appointment[]);
     } catch (caught) {
@@ -108,8 +111,9 @@ export default function Dashboard() {
   const canAccess = (module: ModuleKey) => module === "overview" || workspace.role === "owner" || workspace.permissions[module as keyof Permissions] !== false;
   const visibleNavItems = navItems.filter((item) => workspace.modules[item.module] && canAccess(item.module));
   const can = (module: ModuleKey) => workspace.modules[module] && canAccess(module);
-  return <main className="app-shell">
+  return <main className={"app-shell " + (sidebarCollapsed ? "sidebar-collapsed" : "")}>
     <aside className="sidebar">
+      <button className="sidebar-toggle" title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"} aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"} onClick={() => setSidebarCollapsed((current) => !current)}>{sidebarCollapsed ? "›" : "‹"}</button>
       <Link href="/" className="brand side-brand"><span className="brand-mark">M</span> medix</Link>
       <div className="clinic-switch"><span className="clinic-avatar">{initials(workspace.name)}</span><div><b>{workspace.name}</b><small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></div></div>
       <nav className="side-nav">{visibleNavItems.map((item) => <button key={item.label} className={page === item.label ? "selected" : ""} onClick={() => setPage(item.label)}><i><Icon name={item.icon} /></i><span>{item.label}</span></button>)}</nav>
@@ -120,7 +124,7 @@ export default function Dashboard() {
       {platformRefreshAvailable && <div className="platform-refresh"><span>Uma atualização da Medix está disponível.</span><button onClick={() => { window.sessionStorage.setItem("medix-platform-release", workspace.refreshRequestedAt); window.location.reload(); }}>Atualizar agora</button></div>}
       <div className="content">
         {page !== "Pacientes" && page !== "Procedimentos" && page !== "Agenda" && page !== "Colaboradores" && <div className="page-header"><div>{page === "Visão geral" ? <><p className="workspace-label"><span>{workspace.name}</span> · {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p><h1>Olá, {workspace.user.split(" ")[0]} <span>✦</span></h1><small className="workspace-welcome">Você está na visão geral de <b>{workspace.name}</b>.</small></> : <><p>{workspace.name}</p><h1>{page}</h1></>}</div>{page !== "Visão geral" && <div className="header-actions">{can("patients") && <button className="new-button secondary" onClick={() => setNewPatient(true)}><Icon name="plus" size={16} /> Novo paciente</button>}{can("agenda") && <button className="new-button" onClick={() => setNewAppointment(true)}><Icon name="calendar" size={16} /> Novo agendamento</button>}</div>}</div>}
-        {page === "Visão geral" ? <Overview patients={patients} appointments={appointments} alert={workspace.alert} openPatient={() => setNewPatient(true)} openAppointment={() => setNewAppointment(true)} goPatients={() => setPage("Pacientes")} refresh={refresh} refreshing={refreshing} canPatients={can("patients")} canAgenda={can("agenda")} /> : page === "Agenda" && can("agenda") ? <AgendaWorkspace clinic={workspace.id} onNew={() => setNewAppointment(true)} /> : page === "Pacientes" && can("patients") ? <PatientsWorkspace clinic={workspace.id} patients={patients} onNew={() => setNewPatient(true)} onReload={load} permissions={workspace.permissions} /> : page === "Procedimentos" && can("procedures") ? <ProceduresWorkspace clinic={workspace.id} /> : page === "Colaboradores" && can("team") ? <TeamWorkspace /> : <section className="panel coming"><span>✦</span><h2>{page}</h2><p>Este módulo não está liberado para esta clínica.</p></section>}
+        {page === "Visão geral" ? <Overview patients={patients} appointments={appointments} alert={workspace.alert} memberAlert={workspace.memberAlert} openPatient={() => setNewPatient(true)} openAppointment={() => setNewAppointment(true)} goPatients={() => setPage("Pacientes")} refresh={refresh} refreshing={refreshing} canPatients={can("patients")} canAgenda={can("agenda")} /> : page === "Agenda" && can("agenda") ? <AgendaWorkspace clinic={workspace.id} onNew={() => setNewAppointment(true)} /> : page === "Pacientes" && can("patients") ? <PatientsWorkspace clinic={workspace.id} patients={patients} onNew={() => setNewPatient(true)} onReload={load} permissions={workspace.permissions} /> : page === "Procedimentos" && can("procedures") ? <ProceduresWorkspace clinic={workspace.id} /> : page === "Colaboradores" && can("team") ? <TeamWorkspace /> : <section className="panel coming"><span>✦</span><h2>{page}</h2><p>Este módulo não está liberado para esta clínica.</p></section>}
       </div>
     </section>
     <div className={"mobile-menu-layer " + (mobileMenuOpen ? "is-open" : "")} aria-hidden={!mobileMenuOpen}>
@@ -137,12 +141,13 @@ export default function Dashboard() {
   </main>;
 }
 
-function Overview({ patients, appointments, alert, openPatient, openAppointment, goPatients, refresh, refreshing, canPatients, canAgenda }: { patients: Patient[]; appointments: Appointment[]; alert: { title: string; message: string; level: string } | null; openPatient: () => void; openAppointment: () => void; goPatients: () => void; refresh: () => void; refreshing: boolean; canPatients: boolean; canAgenda: boolean }) {
+function Overview({ patients, appointments, alert, memberAlert, openPatient, openAppointment, goPatients, refresh, refreshing, canPatients, canAgenda }: { patients: Patient[]; appointments: Appointment[]; alert: { title: string; message: string; level: string } | null; memberAlert: { title: string; message: string; level: string } | null; openPatient: () => void; openAppointment: () => void; goPatients: () => void; refresh: () => void; refreshing: boolean; canPatients: boolean; canAgenda: boolean }) {
   const confirmed = appointments.filter((appointment) => appointment.status === "confirmed").length;
   const appointmentNote = appointments.length ? confirmed + " confirmada" + (confirmed === 1 ? "" : "s") : "Agenda disponível";
   const appointmentText = appointments.length ? appointments.length + " atendimento" + (appointments.length === 1 ? "" : "s") + " programado" + (appointments.length === 1 ? "" : "s") : "Organize os próximos atendimentos.";
   return <>
     {alert && <ClinicAlert alert={alert} />}
+    {memberAlert && <ClinicAlert alert={memberAlert} personal />}
     <section className="metrics metrics-updated">
       <Metric icon="calendar" tone="purple" label="Consultas hoje" value={String(appointments.length)} note={appointmentNote} />
       <Metric icon="users" tone="orange" label="Pacientes ativos" value={String(patients.length)} note={patients.length ? "Base da sua clínica" : "Comece cadastrando"} />
@@ -159,10 +164,10 @@ function Overview({ patients, appointments, alert, openPatient, openAppointment,
   </>;
 }
 
-function ClinicAlert({ alert }: { alert: { title: string; message: string; level: string } }) {
+function ClinicAlert({ alert, personal = false }: { alert: { title: string; message: string; level: string }; personal?: boolean }) {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
-  const levelLabel = alert.level === "important" ? "Comunicado importante" : alert.level === "warning" ? "Atenção necessária" : "Comunicado da Medix";
+  const levelLabel = personal ? "Mensagem para você" : alert.level === "important" ? "Comunicado importante" : alert.level === "warning" ? "Atenção necessária" : "Comunicado da Medix";
   return <section className={`clinic-alert ${alert.level}`} role="status">
     <span className="clinic-alert-icon">{alert.level === "important" ? "!" : "✦"}</span>
     <div className="clinic-alert-copy"><small>{levelLabel}</small><b>{alert.title}</b><p>{alert.message}</p></div>
