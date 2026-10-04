@@ -1,0 +1,289 @@
+"use client";
+
+import Link from "next/link";
+import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { api } from "../../lib/api";
+import { signOut as endSession } from "../../lib/auth";
+import { PatientsWorkspace } from "./patients-workspace";
+import { ProceduresWorkspace, type Procedure } from "./procedures-workspace";
+import { AgendaWorkspace } from "./agenda-workspace";
+import { TeamWorkspace } from "./team-workspace";
+import { AppointmentNotifications } from "./appointment-notifications";
+import "../globals.css";
+import "../mobile.css";
+import "./dashboard.css";
+import "./live.css";
+import "./mobile-fix.css";
+import "./overview-enhancements.css";
+import "./sidebar-collapse.css";
+
+type Patient = { id: string; full_name: string; phone: string | null; email: string | null; created_at?: string; preferred_name?: string | null; birth_date?: string | null };
+type Appointment = { id: string; patient_id: string; starts_at: string; status: string };
+type ModuleKey = "overview" | "agenda" | "patients" | "procedures" | "team" | "financial" | "reports";
+type Modules = Record<ModuleKey, boolean>;
+type Permissions = Record<"patients"|"anamnesis"|"records"|"history"|"agenda"|"procedures"|"team"|"financial"|"reports", boolean>;
+type Workspace = { id: string; name: string; role: string; user: string; modules: Modules; permissions: Permissions; alert: { title: string; message: string; level: string } | null; memberAlert: { title: string; message: string; level: string } | null; refreshRequestedAt: string };
+type IconName = "home" | "calendar" | "users" | "team" | "wallet" | "chart" | "plus" | "refresh" | "arrow" | "clock" | "spark" | "menu" | "close";
+
+const initials = (value: string) => value.split(" ").map((word) => word[0]).slice(0, 2).join("").toUpperCase() || "M";
+const moduleDefaults: Modules = { overview: true, agenda: true, patients: true, procedures: true, team: true, financial: true, reports: true };
+const permissionDefaults: Permissions = { patients: true, anamnesis: true, records: true, history: true, agenda: true, procedures: true, team: false, financial: false, reports: false };
+const navItems: { label: string; icon: IconName; module: ModuleKey }[] = [
+  { label: "Visão geral", icon: "home", module: "overview" }, { label: "Agenda", icon: "calendar", module: "agenda" },
+  { label: "Pacientes", icon: "users", module: "patients" }, { label: "Procedimentos", icon: "spark", module: "procedures" }, { label: "Colaboradores", icon: "team", module: "team" },
+  { label: "Financeiro", icon: "wallet", module: "financial" }, { label: "Relatórios", icon: "chart", module: "reports" },
+];
+
+function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
+  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+  const paths: Record<IconName, React.ReactNode> = {
+    home: <><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z" /><path d="M9 21v-6h6v6" /></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></>,
+    users: <><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></>,
+    team: <><circle cx="9" cy="8" r="3" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0" /><path d="M16 5.5a3 3 0 0 1 0 5.8M17.5 14.5a5.5 5.5 0 0 1 3 5.5" /></>,
+    wallet: <><path d="M20 7V5a2 2 0 0 0-2-2H5a3 3 0 0 0 0 6h16v10a2 2 0 0 1-2 2H5a3 3 0 0 1-3-3V6" /><path d="M16 14h.01" /></>,
+    chart: <><path d="M4 19V5M4 19h16" /><path d="m7 15 4-4 3 2 5-6" /></>,
+    plus: <><path d="M12 5v14M5 12h14" /></>, refresh: <><path d="M20 11a8 8 0 1 0 2 5" /><path d="M20 4v7h-7" /></>,
+    arrow: <><path d="M5 12h14M13 6l6 6-6 6" /></>, clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    spark: <path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z" />,
+    menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
+    close: <><path d="m6 6 12 12M18 6 6 18" /></>,
+  };
+  return <svg {...common}>{paths[name]}</svg>;
+}
+
+export default function Dashboard() {
+  const router = useRouter();
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [page, setPage] = useState("Visão geral");
+  const [newPatient, setNewPatient] = useState(false);
+  const [newAppointment, setNewAppointment] = useState(false);
+  const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [platformRefreshAvailable, setPlatformRefreshAvailable] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  async function load() {
+    try {
+      setError("");
+      const account = await api<{ profile: { full_name?: string } | null; workspace: Record<string, unknown> | null }>("/v1/workspace");
+      const membership = account.workspace;
+      if (!membership) return router.replace("/onboarding");
+      if (membership.status !== "active") return router.replace("/pending-approval");
+      const clinic = { id: String(membership.id), name: String(membership.name) };
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const end = new Date(start); end.setDate(end.getDate() + 1);
+      const dashboard = await api<{ patients: Patient[]; appointments: Appointment[] }>(`/v1/dashboard?from=${encodeURIComponent(start.toISOString())}&to=${encodeURIComponent(end.toISOString())}`);
+      const patientRows = dashboard.patients; const appointmentRows = dashboard.appointments;
+      const modules = { ...moduleDefaults, ...(membership.enabled_modules || {}) } as Modules;
+      const permissions = { ...permissionDefaults, ...(membership.permissions || {}) } as Permissions;
+      const alert = membership.admin_alert_title && membership.admin_alert_message ? { title: String(membership.admin_alert_title), message: String(membership.admin_alert_message), level: String(membership.admin_alert_level || "info") } : null;
+      const memberAlert = membership.member_alert_title && membership.member_alert_message ? { title: String(membership.member_alert_title), message: String(membership.member_alert_message), level: String(membership.member_alert_level || "info") } : null;
+      const release = String(membership.refresh_requested_at || "");
+      const storedRelease = window.sessionStorage.getItem("medix-platform-release");
+      if (storedRelease && storedRelease !== release) setPlatformRefreshAvailable(true);
+      if (!storedRelease) window.sessionStorage.setItem("medix-platform-release", release);
+      setWorkspace({ id: clinic.id, name: clinic.name, role: String(membership.role), user: account.profile?.full_name || "Usuário", modules, permissions, alert, memberAlert, refreshRequestedAt: String(membership.refresh_requested_at || "") });
+      setPatients((patientRows || []) as Patient[]);
+      setAppointments((appointmentRows || []) as Appointment[]);
+    } catch (caught) {
+      setError(caught && typeof caught === "object" && "message" in caught ? String(caught.message) : "Erro ao carregar.");
+    } finally { setRefreshing(false); }
+  }
+
+  useEffect(() => { load(); const timer = window.setInterval(load, 120000); return () => window.clearInterval(timer); }, []);
+  const refresh = () => { setRefreshing(true); load(); };
+  async function signOut() {
+    await endSession();
+    router.replace("/auth");
+  }
+  if (!workspace) return <main className="loading-screen"><span className="brand-mark">M</span><p>{error || "Carregando sua clínica..."}</p>{error && <button className="button" onClick={load}>Tentar novamente</button>}</main>;
+
+  // O super admin libera o módulo para a clínica; o proprietário sempre pode administrá-lo.
+  // Para os demais colaboradores, a permissão individual continua sendo obrigatória.
+  const canAccess = (module: ModuleKey) => module === "overview" || workspace.role === "owner" || workspace.permissions[module as keyof Permissions] !== false;
+  const visibleNavItems = navItems.filter((item) => workspace.modules[item.module] && canAccess(item.module));
+  const can = (module: ModuleKey) => workspace.modules[module] && canAccess(module);
+  return <main className={"app-shell " + (sidebarCollapsed ? "sidebar-collapsed" : "")}>
+    <aside className="sidebar">
+      <button className="sidebar-toggle" title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"} aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"} onClick={() => setSidebarCollapsed((current) => !current)}>{sidebarCollapsed ? "›" : "‹"}</button>
+      <Link href="/" className="brand side-brand"><span className="brand-mark">M</span> medix</Link>
+      <div className="clinic-switch"><span className="clinic-avatar">{initials(workspace.name)}</span><div><b>{workspace.name}</b><small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></div></div>
+      <nav className="side-nav">{visibleNavItems.map((item) => <button key={item.label} className={page === item.label ? "selected" : ""} onClick={() => setPage(item.label)}><i><Icon name={item.icon} /></i><span>{item.label}</span></button>)}</nav>
+      <div className="side-bottom"><div className="help"><span>?</span><div><b>Central de ajuda</b><small>Precisa de suporte?</small></div></div><button className="logout-button" onClick={signOut}>Sair da conta <span>→</span></button></div>
+    </aside>
+    <section className="dashboard">
+      <header className="topbar"><div className="mobile-brand"><span className="brand-mark">M</span> medix</div><div className="search">⌕ <input placeholder="Buscar pacientes..." /></div><div className="topbar-mobile-actions"><AppointmentNotifications clinic={workspace.id} /><button className="mobile-menu-trigger" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}><Icon name="menu" /></button><button className="profile"><span>{initials(workspace.user)}</span><b>{workspace.user}<small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></b></button></div></header>
+      {platformRefreshAvailable && <div className="platform-refresh"><span>Uma atualização da Medix está disponível.</span><button onClick={() => { window.sessionStorage.setItem("medix-platform-release", workspace.refreshRequestedAt); window.location.reload(); }}>Atualizar agora</button></div>}
+      <div className="content">
+        {page !== "Pacientes" && page !== "Procedimentos" && page !== "Agenda" && page !== "Colaboradores" && <div className="page-header"><div>{page === "Visão geral" ? <><p className="workspace-label"><span>{workspace.name}</span> · {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p><h1>Olá, {workspace.user.split(" ")[0]} <span>✦</span></h1><small className="workspace-welcome">Você está na visão geral de <b>{workspace.name}</b>.</small></> : <><p>{workspace.name}</p><h1>{page}</h1></>}</div>{page !== "Visão geral" && <div className="header-actions">{can("patients") && <button className="new-button secondary" onClick={() => setNewPatient(true)}><Icon name="plus" size={16} /> Novo paciente</button>}{can("agenda") && <button className="new-button" onClick={() => setNewAppointment(true)}><Icon name="calendar" size={16} /> Novo agendamento</button>}</div>}</div>}
+        {page === "Visão geral" ? <Overview patients={patients} appointments={appointments} alert={workspace.alert} memberAlert={workspace.memberAlert} openPatient={() => setNewPatient(true)} openAppointment={() => setNewAppointment(true)} goPatients={() => setPage("Pacientes")} refresh={refresh} refreshing={refreshing} canPatients={can("patients")} canAgenda={can("agenda")} /> : page === "Agenda" && can("agenda") ? <AgendaWorkspace clinic={workspace.id} onNew={() => setNewAppointment(true)} /> : page === "Pacientes" && can("patients") ? <PatientsWorkspace clinic={workspace.id} patients={patients} onNew={() => setNewPatient(true)} onReload={load} permissions={workspace.permissions} /> : page === "Procedimentos" && can("procedures") ? <ProceduresWorkspace clinic={workspace.id} /> : page === "Colaboradores" && can("team") ? <TeamWorkspace /> : <section className="panel coming"><span>✦</span><h2>{page}</h2><p>Este módulo não está liberado para esta clínica.</p></section>}
+      </div>
+    </section>
+    <div className={"mobile-menu-layer " + (mobileMenuOpen ? "is-open" : "")} aria-hidden={!mobileMenuOpen}>
+      <button className="mobile-menu-backdrop" aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)} />
+      <section className="mobile-menu-drawer">
+        <div className="mobile-menu-head"><div className="brand"><span className="brand-mark">M</span> medix</div><button aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)}><Icon name="close" /></button></div>
+        <div className="mobile-clinic"><span className="clinic-avatar">{initials(workspace.name)}</span><div><b>{workspace.name}</b><small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></div></div>
+        <nav>{visibleNavItems.map((item) => <button key={item.label} className={page === item.label ? "selected" : ""} onClick={() => { setPage(item.label); setMobileMenuOpen(false); }}><Icon name={item.icon} /><span>{item.label}</span></button>)}</nav>
+        <div className="mobile-menu-help"><span>?</span><div><b>Central de ajuda</b><small>Precisa de suporte?</small></div></div><button className="mobile-logout-button" onClick={signOut}>Sair da conta <span>→</span></button>
+      </section>
+    </div>
+    {newPatient && <PatientForm clinic={workspace.id} close={() => setNewPatient(false)} done={() => { setNewPatient(false); load(); }} />}
+    {newAppointment && <AppointmentForm clinic={workspace.id} patients={patients} close={() => setNewAppointment(false)} done={() => { setNewAppointment(false); load(); }} />}
+  </main>;
+}
+
+function Overview({ patients, appointments, alert, memberAlert, openPatient, openAppointment, goPatients, refresh, refreshing, canPatients, canAgenda }: { patients: Patient[]; appointments: Appointment[]; alert: { title: string; message: string; level: string } | null; memberAlert: { title: string; message: string; level: string } | null; openPatient: () => void; openAppointment: () => void; goPatients: () => void; refresh: () => void; refreshing: boolean; canPatients: boolean; canAgenda: boolean }) {
+  const confirmed = appointments.filter((appointment) => appointment.status === "confirmed").length;
+  const appointmentNote = appointments.length ? confirmed + " confirmada" + (confirmed === 1 ? "" : "s") : "Agenda disponível";
+  const appointmentText = appointments.length ? appointments.length + " atendimento" + (appointments.length === 1 ? "" : "s") + " programado" + (appointments.length === 1 ? "" : "s") : "Organize os próximos atendimentos.";
+  return <>
+    {alert && <ClinicAlert alert={alert} />}
+    {memberAlert && <ClinicAlert alert={memberAlert} personal />}
+    <section className="metrics metrics-updated">
+      <Metric icon="calendar" tone="purple" label="Consultas hoje" value={String(appointments.length)} note={appointmentNote} />
+      <Metric icon="users" tone="orange" label="Pacientes ativos" value={String(patients.length)} note={patients.length ? "Base da sua clínica" : "Comece cadastrando"} />
+      <Metric icon="clock" tone="green" label="Próximo atendimento" value={appointments[0] ? new Date(appointments[0].starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Livre"} note={appointments[0] ? "Hoje" : "Sem consultas"} />
+      <Metric icon="chart" tone="blue" label="Resumo financeiro" value="—" note="Em breve" />
+    </section>
+    <section className="quick-actions"><div><p className="section-kicker">AÇÕES RÁPIDAS</p><h2>O que você precisa fazer hoje?</h2></div><div className="quick-action-buttons">
+      {canAgenda && <button onClick={openAppointment}><span className="quick-icon purple"><Icon name="calendar" /></span><span><b>Novo agendamento</b><small>Reserve um horário</small></span><Icon name="arrow" size={16} /></button>}
+      {canPatients && <><button onClick={openPatient}><span className="quick-icon blue"><Icon name="plus" /></span><span><b>Novo paciente</b><small>Crie um cadastro</small></span><Icon name="arrow" size={16} /></button><button onClick={goPatients}><span className="quick-icon orange"><Icon name="users" /></span><span><b>Ver pacientes</b><small>Acesse os cadastros</small></span><Icon name="arrow" size={16} /></button></>}
+      <button onClick={refresh}><span className="quick-icon green"><Icon name="refresh" /></span><span><b>{refreshing ? "Atualizando..." : "Atualizar painel"}</b><small>Consulte novos dados</small></span><Icon name="arrow" size={16} /></button>
+    </div></section>
+    <div className="dash-grid dash-grid-updated"><section className="panel"><header><div><p className="section-kicker">AGENDA</p><h2>Consultas de hoje</h2><p>{appointmentText}</p></div><button className="text-action">Ver agenda <Icon name="arrow" size={14} /></button></header><TodayAppointments appointments={appointments} patients={patients} /></section><section className="panel insights-panel"><header><div><p className="section-kicker">PANORAMA</p><h2>Sua clínica em foco</h2><p>Acompanhe os próximos passos.</p></div></header><div className="insight-list"><div><span className="insight-icon"><Icon name="spark" size={16} /></span><p><b>{patients.length ? "Cadastros atualizados" : "Comece por aqui"}</b><small>{patients.length ? "Use os dados para manter a agenda organizada." : "Cadastre seu primeiro paciente para iniciar."}</small></p></div><div><span className="insight-icon neutral"><Icon name="calendar" size={16} /></span><p><b>{appointments.length ? "Agenda em andamento" : "Dia livre"}</b><small>{appointments.length ? "Confira seus horários antes do próximo atendimento." : "Inclua uma consulta quando estiver pronto."}</small></p></div></div></section></div>
+    <section className="panel patients-panel"><header><div><p className="section-kicker">PACIENTES</p><h2>Cadastros recentes</h2><p>Últimos pacientes adicionados à clínica</p></div><button onClick={goPatients} className="text-action">Ver todos <Icon name="arrow" size={14} /></button></header><PatientRows patients={patients.slice(0, 4)} /></section>
+  </>;
+}
+
+function ClinicAlert({ alert, personal = false }: { alert: { title: string; message: string; level: string }; personal?: boolean }) {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+  const levelLabel = personal ? "Mensagem para você" : alert.level === "important" ? "Comunicado importante" : alert.level === "warning" ? "Atenção necessária" : "Comunicado da Medix";
+  return <section className={`clinic-alert ${alert.level}`} role="status">
+    <span className="clinic-alert-icon">{alert.level === "important" ? "!" : "✦"}</span>
+    <div className="clinic-alert-copy"><small>{levelLabel}</small><b>{alert.title}</b><p>{alert.message}</p></div>
+    <button type="button" onClick={() => setDismissed(true)}>Entendi</button>
+  </section>;
+}
+
+function Metric({ icon, tone, label, value, note }: { icon: IconName; tone: string; label: string; value: string; note: string }) { return <article className="metric"><span className={"metric-icon " + tone}><Icon name={icon} /></span><div><p>{label}</p><h2>{value}</h2><em>{note}</em></div></article>; }
+function TodayAppointments({ appointments, patients }: { appointments: Appointment[]; patients: Patient[] }) { if (!appointments.length) return <div className="empty-state compact"><b><Icon name="calendar" size={17} /></b><p>Nenhuma consulta para hoje.</p><small>Use a Agenda para organizar seu dia.</small></div>; return <div className="timeline">{appointments.map((appointment) => { const patient = patients.find((item) => item.id === appointment.patient_id); return <div className="appointment" key={appointment.id}><time>{new Date(appointment.starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</time><span className="avatar purple-av">{initials(patient?.full_name || "P")}</span><b>{patient?.full_name || "Paciente"}<small>{appointment.status === "confirmed" ? "Confirmada" : "Agendada"}</small></b><span className={"status " + appointment.status}>{appointment.status === "confirmed" ? "Confirmada" : "Agendada"}</span></div>; })}</div>; }
+function PatientList({ patients }: { patients: Patient[] }) { return <section className="panel table-panel"><header><div><h2>Cadastro de pacientes</h2><p>{patients.length} paciente(s) cadastrados</p></div></header><PatientRows patients={patients} /></section>; }
+function PatientRows({ patients }: { patients: Patient[] }) { return patients.length ? <div className="patient-rows">{patients.map((patient) => <div className="patient-row" key={patient.id}><span className="avatar purple-av">{initials(patient.full_name)}</span><b>{patient.full_name}<small>{patient.phone || patient.email || "Sem contato informado"}</small></b><span>Cadastro ativo</span></div>)}</div> : <div className="empty-state"><b>✦</b><p>Nenhum paciente cadastrado.</p><small>Use o botão acima para começar.</small></div>; }
+function PatientForm({ clinic, close, done }: { clinic: string; close: () => void; done: () => void }) {
+  const [form, setForm] = useState({
+    full_name: "", phone: "", email: "", preferred_name: "", birth_date: "", cpf: "",
+    gender: "", occupation: "", postal_code: "", address: "", address_number: "",
+    address_complement: "", neighborhood: "", city: "", state: "",
+    emergency_contact_name: "", emergency_contact_phone: "", referred_by: "", notes: "",
+  });
+  const [error, setError] = useState("");
+  const update = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }));
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    const payload = Object.fromEntries(Object.entries(form).map(([key, value]) => [key, value.trim() || null]));
+    try { await api("/v1/patients", { method: "POST", body: JSON.stringify(payload) }); done(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Erro ao salvar paciente."); }
+  }
+
+  return <div className="modal-backdrop">
+    <form className="modal patient-form patient-registration" onSubmit={save}>
+      <button type="button" className="close" onClick={close}>×</button>
+      <span className="modal-icon"><Icon name="users" /></span>
+      <h2>Novo paciente</h2>
+      <p className="form-intro">Preencha os dados de contato para criar um cadastro organizado.</p>
+      <section className="form-section">
+        <div className="form-section-title"><b>Dados essenciais</b><small>Obrigatórios</small></div>
+        <div className="form-grid">
+          <label className="full">Nome completo <strong>*</strong><input required value={form.full_name} onChange={(event) => update("full_name", event.target.value)} placeholder="Nome e sobrenome" /></label>
+          <label>Telefone <strong>*</strong><input required type="tel" minLength={8} value={form.phone} onChange={(event) => update("phone", event.target.value)} placeholder="(00) 00000-0000" /></label>
+          <label>E-mail <strong>*</strong><input required type="email" value={form.email} onChange={(event) => update("email", event.target.value)} placeholder="email@exemplo.com" /></label>
+        </div>
+      </section>
+      <details className="additional-details">
+        <summary><span>Informações adicionais</span><small>Opcional · ajuda a completar o cadastro</small></summary>
+        <div className="form-section additional-fields">
+          <div className="form-grid">
+            <label>Nome social<input value={form.preferred_name} onChange={(event) => update("preferred_name", event.target.value)} /></label>
+            <label>Data de nascimento<input type="date" value={form.birth_date} onChange={(event) => update("birth_date", event.target.value)} /></label>
+            <label>CPF<input inputMode="numeric" value={form.cpf} onChange={(event) => update("cpf", event.target.value)} /></label>
+            <label>Gênero<select value={form.gender} onChange={(event) => update("gender", event.target.value)}><option value="">Não informado</option><option>Feminino</option><option>Masculino</option><option>Não binário</option><option>Prefiro não informar</option></select></label>
+            <label className="full">Profissão / ocupação<input value={form.occupation} onChange={(event) => update("occupation", event.target.value)} /></label>
+          </div>
+          <div className="form-subtitle">Endereço</div>
+          <div className="form-grid">
+            <label>CEP<input inputMode="numeric" value={form.postal_code} onChange={(event) => update("postal_code", event.target.value)} /></label>
+            <label className="full">Endereço<input value={form.address} onChange={(event) => update("address", event.target.value)} /></label>
+            <label>Número<input value={form.address_number} onChange={(event) => update("address_number", event.target.value)} /></label>
+            <label>Complemento<input value={form.address_complement} onChange={(event) => update("address_complement", event.target.value)} /></label>
+            <label>Bairro<input value={form.neighborhood} onChange={(event) => update("neighborhood", event.target.value)} /></label>
+            <label>Cidade<input value={form.city} onChange={(event) => update("city", event.target.value)} /></label>
+            <label>UF<input maxLength={2} value={form.state} onChange={(event) => update("state", event.target.value.toUpperCase())} /></label>
+          </div>
+          <div className="form-subtitle">Contato de emergência</div>
+          <div className="form-grid">
+            <label>Nome<input value={form.emergency_contact_name} onChange={(event) => update("emergency_contact_name", event.target.value)} /></label>
+            <label>Telefone<input type="tel" value={form.emergency_contact_phone} onChange={(event) => update("emergency_contact_phone", event.target.value)} /></label>
+            <label className="full">Como conheceu a clínica?<input value={form.referred_by} onChange={(event) => update("referred_by", event.target.value)} placeholder="Indicação, Instagram, Google..." /></label>
+            <label className="full">Observações<input value={form.notes} onChange={(event) => update("notes", event.target.value)} placeholder="Informações administrativas relevantes" /></label>
+          </div>
+        </div>
+      </details>
+      {error && <div className="auth-feedback">{error}</div>}
+      <button className="button">Salvar paciente <span>→</span></button>
+    </form>
+  </div>;
+}
+
+function AppointmentForm({ clinic, patients, close, done }: { clinic: string; patients: Patient[]; close: () => void; done: () => void }) {
+  const initialDate = new Date();
+  initialDate.setMinutes(Math.ceil(initialDate.getMinutes() / 30) * 30, 0, 0);
+  const [patientId, setPatientId] = useState("");
+  const [startsAt, setStartsAt] = useState(initialDate.toISOString().slice(0, 16));
+  const [notes, setNotes] = useState("");
+  const [procedures, setProcedures] = useState<Procedure[]>([]);
+  const [procedureId, setProcedureId] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { void (async () => { try { const result = await api<{ procedures: Procedure[] }>("/v1/procedures"); setProcedures((result.procedures || []).filter((item) => item.active)); } catch { setProcedures([]); } })(); }, [clinic]);
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    if (!patientId) return setError("Selecione um paciente para continuar.");
+    setSaving(true);
+    setError("");
+    const start = new Date(startsAt);
+    const procedure = procedures.find((item) => item.id === procedureId);
+    const duration = procedure?.duration_minutes || 30;
+    const end = new Date(start.getTime() + duration * 60 * 1000);
+    try { await api("/v1/appointments", { method: "POST", body: JSON.stringify({
+      patient_id: patientId, starts_at: start.toISOString(), ends_at: end.toISOString(),
+      status: "scheduled", notes: notes.trim() || null, duration_minutes: duration, procedure_id: procedureId || null,
+    }) }); done(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Erro ao criar agendamento."); } finally { setSaving(false); }
+  }
+
+  return <div className="modal-backdrop">
+    <form className="modal appointment-form" onSubmit={save}>
+      <button type="button" className="close" onClick={close}>×</button>
+      <span className="modal-icon"><Icon name="calendar" /></span>
+      <h2>Novo agendamento</h2>
+      <p>Reserve um horário de 30 minutos. Você poderá adicionar procedimentos na próxima etapa da agenda.</p>
+      {!patients.length ? <div className="auth-feedback">Cadastre um paciente antes de criar um agendamento.</div> : <>
+        <label>Paciente <strong>*</strong><select required value={patientId} onChange={(event) => setPatientId(event.target.value)}><option value="">Selecione um paciente</option>{patients.map((patient) => <option key={patient.id} value={patient.id}>{patient.full_name}</option>)}</select></label>
+        <label>Procedimento <small>Opcional</small><select value={procedureId} onChange={(event) => setProcedureId(event.target.value)}><option value="">Sem procedimento definido</option>{procedures.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.duration_minutes} min{item.price !== null ? ` · R$ ${Number(item.price).toFixed(2).replace(".", ",")}` : ""}</option>)}</select></label>
+        <label>Data e horário <strong>*</strong><input required type="datetime-local" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} /></label>
+        <label>Observações <small>Opcional</small><input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex.: primeira consulta" /></label>
+        {error && <div className="auth-feedback">{error}</div>}
+        <button disabled={saving} className="button">{saving ? "Salvando..." : "Confirmar agendamento"} <span>→</span></button>
+      </>}
+    </form>
+  </div>;
+}
