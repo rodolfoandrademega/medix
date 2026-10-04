@@ -1,4 +1,3 @@
-import { firebaseAuth } from "./firebase";
 import { supabase } from "./supabase";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -12,7 +11,6 @@ export async function publicApi<T>(path: string, init: RequestInit = {}): Promis
 }
 
 async function accessToken() {
-  if (firebaseAuth?.currentUser) return firebaseAuth.currentUser.getIdToken();
   const { data } = await supabase?.auth.getSession() || { data: { session: null } };
   return data.session?.access_token;
 }

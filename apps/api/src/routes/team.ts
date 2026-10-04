@@ -4,8 +4,6 @@ import { config } from "../config.js";
 import { database } from "../supabase.js";
 import { getClinicAccess, requirePermission } from "../access.js";
 import { requireUser, type AuthenticatedRequest } from "../auth.js";
-import { firebaseAuth } from "../firebase.js";
-import { randomUUID } from "node:crypto";
 
 const roles = ["admin", "professional", "receptionist"] as const;
 const permissionKeys = ["patients", "anamnesis", "records", "history", "agenda", "procedures", "team", "financial", "reports"] as const;
@@ -45,14 +43,9 @@ export async function registerTeamRoutes(app: FastifyInstance) {
     ]);
     if (error) throw error; if (inviteError) throw inviteError;
     const emails = new Map<string, string>();
-    if (config.authProvider === "firebase") {
-      const users = await firebaseAuth.listUsers(1000);
-      users.users.forEach((user) => emails.set(user.uid, user.email || ""));
-    } else {
-      const users = await database.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      if (users.error) throw users.error;
-      users.data.users.forEach((user) => emails.set(user.id, user.email || ""));
-    }
+    const users = await database.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (users.error) throw users.error;
+    users.data.users.forEach((user) => emails.set(user.id, user.email || ""));
     return { members: [
       ...(members || []).map((member) => ({ ...member, member_role: member.role, email: emails.get(member.user_id) || "", full_name: (member.profiles as unknown as { full_name?: string })?.full_name || "", status: "active" })),
       ...(invites || []).map((invite) => ({ invite_id: invite.id, user_id: null, full_name: "", email: invite.email, member_role: invite.role, role: invite.role, permissions: invite.permissions, status: invite.status, created_at: invite.created_at })),
@@ -83,24 +76,6 @@ export async function registerTeamRoutes(app: FastifyInstance) {
 
     const access = await getClinicAccess((request as AuthenticatedRequest).userId); requirePermission(access, "team");
 
-    if (config.authProvider === "firebase") {
-      const uid = randomUUID();
-      try {
-        await firebaseAuth.createUser({ uid, email, password, emailVerified: true });
-        const { error: profileError } = await database.from("profiles").insert({ id: uid, full_name: "" });
-        if (profileError) { await firebaseAuth.deleteUser(uid); throw profileError; }
-        const { error: memberError } = await database.from("clinic_members").insert({ clinic_id: access.clinicId, user_id: uid, role, permissions });
-        if (memberError) { await database.from("profiles").delete().eq("id", uid); await firebaseAuth.deleteUser(uid); throw memberError; }
-        const loginUrl = `${config.allowedOrigin.split(",")[0].replace(/\/$/, "")}/auth`;
-        const sent = await sendAccessEmail(email, password, loginUrl);
-        return reply.status(201).send({ message: sent ? "Acesso criado e enviado por e-mail." : "Acesso criado. Compartilhe o login e a senha com o colaborador." });
-      } catch (error) {
-        if ((error as { code?: string }).code === "auth/email-already-exists") return reply.status(409).send({ message: "Já existe uma conta com este e-mail no Firebase." });
-        throw error;
-      }
-    }
-
-    // Compatibilidade temporária para a produção atual com Supabase Auth.
     const memberClient = createClient(config.supabaseUrl, config.supabaseServiceRoleKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
       auth: { autoRefreshToken: false, persistSession: false },

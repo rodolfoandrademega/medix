@@ -2,19 +2,31 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { resetPassword, signIn, signUp } from "../../lib/auth";
+import { FormEvent, useEffect, useState } from "react";
+import { resetPassword, signIn, signUp, updatePassword } from "../../lib/auth";
+import { supabase } from "../../lib/supabase";
 import "./auth.css";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [recovering, setRecovering] = useState(false);
   const [fullName, setFullName] = useState(""); const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
   const [feedback, setFeedback] = useState(""); const [loading, setLoading] = useState(false); const router = useRouter();
+
+  useEffect(() => {
+    const subscription = supabase?.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") { setRecovering(true); setFeedback("Defina uma nova senha para continuar."); }
+    }).data.subscription;
+    return () => subscription?.unsubscribe();
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault(); setFeedback(""); setLoading(true);
     try {
-      if (mode === "signup") await signUp(fullName, email, password); else await signIn(email, password);
+      if (recovering) await updatePassword(password);
+      else if (mode === "signup") await signUp(fullName, email, password);
+      else await signIn(email, password);
+      if (recovering) setFeedback("Senha alterada com sucesso.");
       router.push("/onboarding");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Não foi possível entrar.";
@@ -28,5 +40,5 @@ export default function AuthPage() {
     catch (error) { setFeedback(error instanceof Error ? error.message : "Não foi possível enviar a recuperação."); }
   }
 
-  return <main className="auth-page"><section className="auth-aside"><Link href="/" className="brand"><span className="brand-mark">M</span> medix</Link><div><div className="eyebrow">Cuidado que evolui</div><h1>Uma nova rotina<br/>começa <em>aqui.</em></h1><p>Mais organização para sua equipe, mais atenção para cada paciente.</p></div><div className="auth-quote">“A Medix nos trouxe a clareza que faltava para crescer.”<small>Dra. Carolina Mendes · Instituto Vitta</small></div></section><section className="auth-form-area"><Link className="back-home" href="/">← Voltar para o site</Link><div className="auth-card"><div className="auth-tabs"><button className={mode === "login" ? "active" : ""} onClick={() => { setMode("login"); setFeedback(""); }}>Entrar</button><button className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setFeedback(""); }}>Criar conta</button></div><h2>{mode === "login" ? "Que bom ver você." : "Vamos começar."}</h2><p>{mode === "login" ? "Entre para acessar a sua clínica." : "Crie sua conta para configurar sua clínica."}</p><form onSubmit={submit}>{mode === "signup" && <label>Seu nome<input value={fullName} onChange={(event) => setFullName(event.target.value)} required placeholder="Como podemos te chamar?" /></label>}<label>E-mail profissional<input value={email} onChange={(event) => setEmail(event.target.value)} required type="email" placeholder="voce@clinica.com.br" /></label><label>Senha<input value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} type="password" placeholder="Mínimo de 8 caracteres" /></label>{mode === "login" && <button type="button" className="forgot" onClick={forgot}>Esqueci minha senha</button>}{feedback && <div className="auth-feedback">{feedback}</div>}<button disabled={loading} className="button auth-submit">{loading ? "Aguarde..." : mode === "login" ? "Entrar na Medix" : "Criar minha conta"}<span>→</span></button></form><small className="terms">Ao continuar, você concorda com os Termos de uso e a Política de privacidade da Medix.</small></div></section></main>;
+  return <main className="auth-page"><section className="auth-aside"><Link href="/" className="brand"><span className="brand-mark">M</span> medix</Link><div><div className="eyebrow">Cuidado que evolui</div><h1>Uma nova rotina<br/>começa <em>aqui.</em></h1><p>Mais organização para sua equipe, mais atenção para cada paciente.</p></div><div className="auth-quote">“A Medix nos trouxe a clareza que faltava para crescer.”<small>Dra. Carolina Mendes · Instituto Vitta</small></div></section><section className="auth-form-area"><Link className="back-home" href="/">← Voltar para o site</Link><div className="auth-card">{!recovering && <div className="auth-tabs"><button className={mode === "login" ? "active" : ""} onClick={() => { setMode("login"); setFeedback(""); }}>Entrar</button><button className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setFeedback(""); }}>Criar conta</button></div>}<h2>{recovering ? "Crie uma nova senha." : mode === "login" ? "Que bom ver você." : "Vamos começar."}</h2><p>{recovering ? "Use pelo menos 8 caracteres." : mode === "login" ? "Entre para acessar a sua clínica." : "Crie sua conta para configurar sua clínica."}</p><form onSubmit={submit}>{!recovering && mode === "signup" && <label>Seu nome<input value={fullName} onChange={(event) => setFullName(event.target.value)} required placeholder="Como podemos te chamar?" /></label>}{!recovering && <label>E-mail profissional<input value={email} onChange={(event) => setEmail(event.target.value)} required type="email" placeholder="voce@clinica.com.br" /></label>}<label>{recovering ? "Nova senha" : "Senha"}<input value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} type="password" placeholder="Mínimo de 8 caracteres" /></label>{!recovering && mode === "login" && <button type="button" className="forgot" onClick={forgot}>Esqueci minha senha</button>}{feedback && <div className="auth-feedback">{feedback}</div>}<button disabled={loading} className="button auth-submit">{loading ? "Aguarde..." : recovering ? "Salvar nova senha" : mode === "login" ? "Entrar na Medix" : "Criar minha conta"}<span>→</span></button></form><small className="terms">Ao continuar, você concorda com os Termos de uso e a Política de privacidade da Medix.</small></div></section></main>;
 }

@@ -4,7 +4,7 @@ Monorepo do sistema de gestão multi-clínica Medix.
 
 ```text
 apps/web   Frontend Next.js para Vercel
-apps/api   Backend Fastify para Google Cloud Run
+apps/api   Backend Fastify para Vercel Functions
 supabase   Migrations do PostgreSQL
 docs       Guias de migração e deploy
 ```
@@ -25,4 +25,4 @@ O frontend abre em `http://localhost:3000` e a API em `http://localhost:8080`.
 npm run build
 ```
 
-O comando compila API e frontend. Consulte [ARCHITECTURE.md](./ARCHITECTURE.md) para os limites de segurança e [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) para publicar no Google Cloud, GitHub e Vercel.
+O comando compila API e frontend. Consulte [ARCHITECTURE.md](./ARCHITECTURE.md) para os limites de segurança e [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) para publicar os dois projetos na Vercel com Supabase.
