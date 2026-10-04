@@ -72,6 +72,9 @@ Não faça estes passos antes de validar a API e importar os usuários existente
 npm run migrate:firebase --workspace @medix/api
 ```
 
+O comando lê automaticamente `apps/api/.env`. Não copie esse arquivo para o Git
+nem compartilhe as chaves secretas do Supabase.
+
 O script cria os usuários com os mesmos IDs, gera a redefinição de senha e envia pelo Resend quando configurado. Confira no resumo final se `notified` é igual a `imported`.
 
 4. Adicione na Vercel `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID` e `NEXT_PUBLIC_FIREBASE_APP_ID`.
