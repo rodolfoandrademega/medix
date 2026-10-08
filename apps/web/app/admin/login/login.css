@@ -1,0 +1,29 @@
+.mx-admin-story { background-color: #252938; background-image: radial-gradient(ellipse at 10% 100%, #40455f 0, transparent 65%); }
+.mx-admin-console-label { border: 1px solid #c8b3ee30; padding: 6px 10px; border-radius: 6px; font-size: 8px; letter-spacing: 1.7px; color: #c8b3ee; }
+.mx-admin-story h1 { font-size: clamp(39px, 3.8vw, 55px); }
+.mx-admin-capabilities { margin-top: 30px; max-width: 370px; }
+.mx-admin-capabilities>div { display: flex; align-items: flex-start; gap: 13px; padding: 18px 0; border-bottom: 1px solid #ffffff10; }
+.mx-admin-capabilities>div:last-child { border-bottom: 0; padding-bottom: 0; }
+.mx-admin-capabilities>div>span { display: grid; place-items: center; flex-shrink: 0; height: 28px; width: 28px; border-radius: 8px; background: #c8b3ee0e; color: #ad9ccc; font-size: 9px; }
+.mx-admin-capabilities strong { font-size: 12px; font-weight: 500; color: #e5dff0; }
+.mx-admin-capabilities p { margin: 6px 0 0; font-size: 11px; line-height: 1.8; color: #aba9be; }
+.mx-admin-card { max-width: 410px; }
+.mx-admin-access-badge { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e3dcec; background: #f2eef8; border-radius: 6px; padding: 7px 9px; color: #8261ae; font-size: 8px; font-weight: 600; letter-spacing: 1px; margin-bottom: 9px; }
+.mx-admin-access-badge svg { width: 12px; height: 12px; }
+.mx-admin-access-note { display: flex; align-items: flex-start; gap: 10px; border: 1px solid #e9e4ed; border-radius: 10px; padding: 15px; margin-top: 25px; background: #f7f5f8; }
+.mx-admin-access-note>svg { flex-shrink: 0; color: #a58ebc; height: 18px; width: 18px; margin-top: 2px; }
+.mx-admin-access-note p { font-size: 10px; line-height: 1.8; color: #81738d; margin: 0; }
+.mx-admin-access-note strong { display: block; font-weight: 500; color: #655572; margin-bottom: 3px; }
+.mx-admin-clinic-link { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 25px; font-size: 10px; color: #82768c; }
+.mx-admin-clinic-link a { display: inline-flex; align-items: center; gap: 6px; color: #8261b0; font-weight: 500; min-height: 32px; }
+.mx-admin-clinic-link svg { height: 13px; width: 13px; }
+@media(max-width: 760px) {
+  .mx-admin-story h1 { font-size: 26px; }
+  .mx-admin-story h1>span { margin-top: 3px; }
+  .mx-admin-story h1>span br { display: inline; }
+  .mx-admin-capabilities { display: none; }
+  .mx-admin-story-content>p { max-width: 420px; }
+  .mx-admin-card { max-width: 520px; }
+  .mx-admin-access-note p { font-size: 11px; }
+}
+@media(max-width: 440px) { .mx-admin-story h1 { font-size: 25px; } .mx-admin-story h1>span br { display: none; } }

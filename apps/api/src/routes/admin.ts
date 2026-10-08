@@ -9,10 +9,11 @@ const statuses = ["pending", "active", "suspended", "inactive"];
 export async function registerAdminRoutes(app: FastifyInstance) {
   app.get("/v1/admin/clinics", { preHandler: requireUser }, async (request) => {
     const userId = (request as AuthenticatedRequest).userId; await requirePlatformAdmin(userId);
-    const [{ data: profile }, { data, error }] = await Promise.all([
+    const [{ data: profile, error: profileError }, { data, error }] = await Promise.all([
       database.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
       database.from("clinics").select("id,name,slug,status,plan_name,created_at,enabled_modules,admin_alert_title,admin_alert_message,admin_alert_level").order("created_at", { ascending: false }),
     ]);
+    if (profileError) throw profileError;
     if (error) throw error; return { admin: profile, clinics: data || [] };
   });
 

@@ -11,6 +11,11 @@ docs       Guias de migração e deploy
 
 ## Rodar localmente
 
+Copie `apps/web/.env.example` para `apps/web/.env.local` e
+`apps/api/.env.example` para `apps/api/.env.local`. Preencha as variáveis do
+Supabase e mantenha `NEXT_PUBLIC_API_URL=http://localhost:8080` no frontend.
+A API carrega seu `.env.local` automaticamente no comando de desenvolvimento.
+
 ```bash
 npm install
 npm run dev:api

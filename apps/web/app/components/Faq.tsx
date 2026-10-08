@@ -11,5 +11,5 @@ const items = [
 
 export default function Faq() {
   const [open, setOpen] = useState(0);
-  return <div className="faq-list">{items.map(([question, answer], index) => <article className={open === index ? "faq-item open" : "faq-item"} key={question}><button onClick={() => setOpen(open === index ? -1 : index)}><span>{question}</span><b>{open === index ? "−" : "+"}</b></button>{open === index && <p>{answer}</p>}</article>)}</div>;
+  return <div className="faq-list">{items.map(([question, answer], index) => <article className={open === index ? "faq-item open" : "faq-item"} key={question}><button type="button" aria-expanded={open === index} aria-controls={`faq-answer-${index}`} id={`faq-question-${index}`} onClick={() => setOpen(open === index ? -1 : index)}><span>{question}</span><b aria-hidden="true">{open === index ? "−" : "+"}</b></button><div id={`faq-answer-${index}`} role="region" aria-labelledby={`faq-question-${index}`} hidden={open !== index}><p>{answer}</p></div></article>)}</div>;
 }

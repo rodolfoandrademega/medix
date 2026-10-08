@@ -1,0 +1,166 @@
+.admin-console { --console-purple:#7051e8; --console-ink:#2d273c; --console-muted:#82788e; background:#f8f7fb; color:var(--console-ink); -webkit-font-smoothing:antialiased; }
+.admin-console button,.admin-console input,.admin-console select,.admin-console textarea { font-family:'DM Sans',sans-serif; }
+.admin-console button:focus-visible,.admin-console a:focus-visible { outline:3px solid #b39bea; outline-offset:3px; }
+.admin-console .admin-topbar { height:85px; padding:0 max(4vw,24px); background:#fdfcfe; }
+.admin-console .admin-logo { font-size:27px; font-weight:700; }
+.admin-console .admin-logo .brand-mark { background:#7051e8; font:700 27px/1 'DM Sans',sans-serif; padding-right:4px; padding-bottom:3px; position:relative; box-shadow:none; }
+.admin-console .brand-mark>span { position:absolute; font-size:13px; top:2px; right:4px; }
+.admin-console .admin-logo small { font-size:7px; letter-spacing:1.1px; margin-top:4px; }
+.admin-console .console-account { display:flex; align-items:center; gap:12px; text-align:left; }
+.admin-console .console-account-avatar { display:grid; place-items:center; background:#eee7f8; color:#8a69b7; width:34px; height:34px; border-radius:50%; font-size:10px; font-weight:600; }
+.admin-console .console-account>div>span { color:#a394b5; font-size:7px; font-weight:600; letter-spacing:1px; }
+.admin-console .console-account>div>b { font-size:11px; font-weight:500; margin-top:5px; }
+.console-account>button { background:none; border:0; border-left:1px solid #eee8f2; color:#897890; font-size:10px; padding:8px 0 8px 18px; margin-left:8px; cursor:pointer; }
+.console-account>button span { margin-left:7px; }
+.admin-console .admin-content { max-width:1320px; padding:47px 48px 25px; }
+.admin-console .admin-title { align-items:center; }
+.admin-console .admin-title p { font-size:8px; letter-spacing:1.5px; color:#9b80bd; font-weight:600; margin-bottom:12px; }
+.admin-console .admin-title h1 { font-size:34px; font-weight:500; letter-spacing:-1.4px; }
+.admin-console .admin-title>div>span { color:#8e829b; font-size:12px; line-height:1.7; margin-top:12px; }
+.admin-console .admin-global-actions { display:flex; align-items:center; gap:10px; }
+.admin-console .admin-global-actions button { background:var(--console-purple); padding:13px 16px; border-radius:8px; font-size:10px; font-weight:500; white-space:nowrap; }
+.admin-console .admin-global-actions button>span { margin-left:9px; }
+.admin-console .admin-global-actions .console-reload { background:#fff; border:1px solid #e6dfed; color:#8c74ab; }
+.console-summary { display:flex; align-items:center; gap:60px; background:#ece5f6; border:1px solid #e2d8ef; border-radius:13px; padding:25px 29px; margin-top:29px; position:relative; overflow:hidden; }
+.console-summary>div,.console-summary>p { position:relative; z-index:1; }
+.console-summary-label { display:block; color:#87639f; font-size:8px; font-weight:600; letter-spacing:1.4px; }
+.console-summary strong { display:flex; align-items:center; gap:19px; font-size:36px; font-weight:500; letter-spacing:-1px; margin-top:8px; }
+.console-summary strong>span { color:#786187; font-size:11px; font-weight:400; letter-spacing:0; max-width:140px; line-height:1.8; }
+.console-summary>p { margin:0 45px 0 auto; color:#786187; font-size:11px; line-height:1.9; max-width:390px; }
+.console-summary-decoration { position:absolute; right:13px; top:50%; transform:translateY(-50%) rotate(-10deg); font-size:140px; font-weight:400; color:#dfd4ef; line-height:1; }
+.admin-console .admin-metrics { gap:14px; margin:20px 0 30px; }
+.admin-console .console-metric { background:#fff; border:1px solid #e8e3ee; border-radius:12px; padding:18px; text-align:left; cursor:pointer; transition:border-color .2s,box-shadow .2s; }
+.admin-console .console-metric:hover { border-color:#c7b6e0; }
+.admin-console .console-metric.selected { border-color:#a585d0; box-shadow:0 0 0 2px #a585d019; }
+.admin-console .console-metric-heading { display:flex; align-items:center; gap:7px; color:#7f6a90; font-size:10px; }
+.admin-console .console-metric-heading>i { width:6px; height:6px; border-radius:50%; background:#a192b6; }
+.admin-console .console-metric.active i { background:#83a894; }
+.admin-console .console-metric.pending i { background:#d4b47b; }
+.admin-console .console-metric.suspended i { background:#ca8c94; }
+.admin-console .console-metric-heading>span { margin-left:auto; color:#c0b1cd; }
+.admin-console .console-metric>strong { display:block; font-size:30px; font-weight:500; letter-spacing:-1px; margin-top:14px; }
+.admin-console .console-metric>small { display:block; color:#887791; font-size:9px; margin-top:7px; }
+.admin-console .admin-table { border-radius:13px; border-color:#e8e2ee; }
+.admin-console .admin-table>header { padding:23px 25px 21px; border:0; }
+.admin-console .admin-table h2 { font-size:21px; font-weight:500; letter-spacing:-.6px; }
+.admin-console .admin-table header p { margin-top:7px; font-size:11px; color:#83708f; }
+.admin-console .admin-table header .console-section-kicker { color:#a18bb8; font-size:7px; letter-spacing:1.4px; font-weight:600; margin:0 0 9px; }
+.console-total { background:#f3eff8; padding:6px 9px; border-radius:6px; font-size:9px!important; color:#9a83b1!important; }
+.console-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 25px 22px; }
+.console-search { display:flex; align-items:center; gap:8px; background:#faf8fc; border:1px solid #e8e0ef; padding:0 12px; border-radius:8px; max-width:330px; width:100%; }
+.console-search>span:first-child { color:#a690ba; font-size:23px; }
+.console-search input { width:100%; height:39px; min-width:0; border:0; background:none; font-size:10px; color:#645272; outline:none; }
+.console-search:focus-within { outline:2px solid #b6a0d5; outline-offset:2px; }
+.console-search input::placeholder { color:#a393b0; }
+.console-filters { display:flex; align-items:center; gap:3px; }
+.console-filters button { border:0; background:none; padding:8px 9px; border-radius:6px; color:#887299; font-size:9px; cursor:pointer; white-space:nowrap; }
+.console-filters button.selected { background:#eee6f8; color:#8463b0; }
+.console-filters button>span { margin-left:5px; font-size:8px; opacity:.75; }
+.console-columns,.admin-console .admin-table article { display:grid; grid-template-columns:1.4fr .65fr .8fr 1.4fr; align-items:center; gap:18px; padding-inline:25px; }
+.console-columns { padding-block:12px; background:#faf8fc; border-block:1px solid #eee8f3; color:#88709b; font-size:7px; font-weight:600; letter-spacing:1px; }
+.console-columns>span:last-child { text-align:right; }
+.admin-console .admin-table article { padding-block:19px; border-color:#f0ebf4; }
+.admin-console .clinic-cell { display:flex; align-items:center; gap:12px; min-width:0; }
+.console-clinic-avatar { display:grid; place-items:center; width:35px; height:35px; border-radius:10px; background:#eee8f6; color:#9a7eb8; font-size:10px; flex-shrink:0; }
+.admin-console .clinic-cell>div { min-width:0; }
+.admin-console .clinic-cell b { color:#665671; font-size:11px; font-weight:600; line-height:1.7; overflow-wrap:anywhere; }
+.admin-console .clinic-cell small { color:#8a749d; font-size:9px; margin-top:3px; overflow-wrap:anywhere; }
+.console-clinic-date { display:block; color:#8e7b9b; font-size:8px; margin-top:4px; }
+.admin-console .status-badge { display:inline-flex; align-items:center; gap:5px; font-size:8px; font-weight:500; padding:6px 8px; }
+.status-badge>i { width:4px; height:4px; border-radius:50%; background:currentColor; }
+.admin-console .status-badge.active { background:#edf5f0; color:#729981; }
+.admin-console .status-badge.pending { background:#fbf3e4; color:#b99a66; }
+.admin-console .status-badge.suspended { background:#faecee; color:#bf818c; }
+.console-plan b { display:block; color:#8b739d; font-size:10px; font-weight:500; }
+.console-plan small { display:block; color:#8a739b; font-size:8px; margin-top:6px; }
+.admin-console .admin-actions { flex-wrap:wrap; gap:5px; }
+.admin-console .admin-actions button { border-color:#e7def0; font-size:8px; font-weight:500; padding:7px 8px; color:#9d7cbc; min-height:30px; }
+.admin-console .admin-actions button:first-child { background:#f4effb; color:#8c67b7; }
+.admin-console .admin-actions button>span { margin-left:4px; }
+.console-pagination { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:15px 25px; border-top:1px solid #efe9f4; color:#897399; font-size:9px; }
+.console-pagination>div { display:flex; align-items:center; gap:13px; }
+.console-pagination button { border:1px solid #ece3f3; background:#fff; color:#9a7eb9; width:28px; height:28px; border-radius:6px; cursor:pointer; }
+.console-pagination button:disabled { opacity:.35; cursor:default; }
+.console-footer { display:flex; justify-content:space-between; gap:15px; color:#8a7796; font-size:8px; padding-top:23px; line-height:1.9; }
+.console-notice { display:flex; justify-content:space-between; align-items:center; gap:15px; font-size:12px; line-height:1.8; padding:14px 16px; }
+.console-notice.success { background:#edf5f0; border:1px solid #dcebe1; color:#5d826b; }
+.console-notice.error,.console-load-error { background:#fbefef; border:1px solid #f0d8dd; color:#a46171; }
+.console-notice>button { border:0; background:none; color:inherit; font-size:22px; min-width:32px; min-height:32px; cursor:pointer; }
+.console-load-error { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:17px; margin-bottom:20px; border-radius:10px; }
+.console-load-error strong { font-size:12px; font-weight:600; }
+.console-load-error p { font-size:11px; margin:7px 0 0; }
+.console-load-error button { border:1px solid #dfbac5; background:#fff; color:#ac6e80; border-radius:7px; padding:9px 13px; font-size:10px; cursor:pointer; }
+.console-empty { text-align:center; padding:40px 20px; }
+.console-empty>span { display:grid; place-items:center; height:40px; width:40px; margin:auto; border-radius:12px; background:#f0eaf8; color:#a78cbf; font-size:28px; }
+.console-empty h3 { font-size:15px; color:#7c698d; font-weight:500; margin:18px 0 10px; }
+.console-empty p { font-size:11px; color:#a08db1; line-height:1.9; }
+.console-empty button { border:1px solid #e4d7ee; border-radius:7px; background:#faf6fe; color:#9570b2; padding:9px 13px; font-size:10px; margin-top:10px; cursor:pointer; }
+.console-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.admin-console .admin-modal-layer { background:#27203377; backdrop-filter:blur(5px); z-index:50; padding:28px; }
+.admin-console .admin-editor { width:min(720px,100%); max-height:calc(100dvh - 56px); overflow:auto; border-radius:17px; padding:32px; box-shadow:0 20px 80px #2d223539; }
+.admin-console .admin-editor h2 { font-size:28px; font-weight:500; }
+.admin-console .admin-editor>p { font-size:8px; letter-spacing:1.3px; color:#a086bc; }
+.admin-console .editor-subtitle { line-height:1.8; font-size:11px; color:#95849f; }
+.admin-console .editor-grid input,.admin-console .editor-grid textarea,.admin-console .editor-grid select { font-size:13px; padding:12px; }
+.admin-console .module-toggle { padding:12px; }
+.console-danger-zone { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-top:24px; padding:17px; background:#fcf6f6; border:1px solid #f0dfe1; border-radius:9px; }
+.console-danger-zone h3 { font-size:11px; color:#a77481; margin:0 0 6px; font-weight:600; }
+.console-danger-zone p { font-size:10px; color:#b39199; margin:0; line-height:1.7; }
+.console-danger-zone button { flex-shrink:0; border:1px solid #e8cbd2; border-radius:6px; color:#a77481; background:#fff; padding:9px 11px; font-size:10px; cursor:pointer; }
+@media(max-width:1100px) { .admin-console .admin-content { padding:36px 30px 25px; } .admin-console .admin-title { flex-direction:column; align-items:flex-start; gap:23px; } .console-toolbar { flex-direction:column; align-items:stretch; } .console-search { max-width:none; } .console-filters { flex-wrap:wrap; } .console-columns,.admin-console .admin-table article { grid-template-columns:1.3fr .6fr .8fr 1.3fr; gap:12px; } .console-summary { gap:35px; } .console-summary>p { max-width:340px; } }
+@media(max-width:760px) {
+  .admin-console .admin-topbar { height:74px; padding-inline:20px; }
+  .admin-console .admin-logo { font-size:24px; }
+  .admin-console .admin-logo small { font-size:6px; }
+  .admin-console .console-account { gap:8px; }
+  .console-account>button { margin-left:0; padding-left:10px; }
+  .admin-console .console-account-avatar { display:none; }
+  .admin-console .admin-content { padding:30px 20px 24px; }
+  .admin-console .admin-title h1 { font-size:29px; line-height:1.2; }
+  .admin-console .admin-title>div>span { font-size:12px; }
+  .admin-console .admin-global-actions { width:100%; }
+  .admin-console .admin-global-actions button { flex:1; padding:13px 10px; min-height:44px; }
+  .console-summary { display:block; padding:22px; margin-top:25px; }
+  .console-summary>p { margin:17px 0 0; max-width:none; font-size:11px; }
+  .console-summary strong>span { max-width:none; }
+  .console-summary-decoration { top:60px; font-size:120px; right:-10px; }
+  .admin-console .admin-metrics { gap:10px; margin-block:15px 24px; }
+  .admin-console .console-metric { padding:14px; }
+  .admin-console .console-metric-heading { font-size:9px; gap:5px; line-height:1.6; }
+  .admin-console .console-metric-heading>span { display:none; }
+  .admin-console .console-metric>strong { font-size:28px; margin-top:11px; }
+  .admin-console .console-metric>small { font-size:8px; line-height:1.7; }
+  .admin-console .admin-table>header { padding:20px; }
+  .admin-console .admin-table h2 { font-size:20px; }
+  .console-toolbar { padding:0 20px 18px; gap:13px; }
+  .console-search input { font-size:16px; height:43px; }
+  .console-search input::placeholder { font-size:11px; }
+  .console-filters { gap:4px; }
+  .console-filters button { font-size:10px; padding:9px 8px; min-height:40px; }
+  .console-columns { display:none; }
+  .admin-console .admin-table article { grid-template-columns:1fr auto; gap:17px 10px; padding:20px; border-top:1px solid #eee7f5; }
+  .admin-console .clinic-cell b { font-size:12px; }
+  .admin-console .clinic-cell small { font-size:10px; }
+  .console-clinic-date { font-size:9px; }
+  .admin-console .status-badge { font-size:9px; padding:7px 8px; }
+  .console-plan { display:flex; gap:9px; align-items:center; grid-column:1 / -1; }
+  .console-plan b { font-size:11px; padding:5px 8px; background:#f4eff9; border-radius:5px; }
+  .console-plan small { margin-top:0; font-size:9px; }
+  .admin-console .admin-actions { grid-column:1 / -1; justify-content:flex-start; flex-wrap:nowrap; gap:8px; }
+  .admin-console .admin-actions button { flex:1; font-size:10px; min-height:40px; padding:9px 8px; }
+  .console-pagination { padding:16px 20px; font-size:10px; }
+  .console-pagination button { height:36px; width:36px; }
+  .console-footer { flex-direction:column; gap:6px; font-size:9px; }
+  .console-load-error { flex-direction:column; align-items:flex-start; }
+  .admin-console .admin-modal-layer { padding:12px; }
+  .admin-console .admin-editor { max-height:calc(100dvh - 24px); padding:25px 20px; }
+  .admin-console .editor-grid input,.admin-console .editor-grid textarea,.admin-console .editor-grid select { font-size:16px; }
+  .admin-console .module-toggle { min-height:44px; }
+  .console-danger-zone { flex-direction:column; align-items:flex-start; gap:13px; }
+}
+@media(max-width:380px) { .admin-console .admin-content { padding-inline:14px; } .admin-console .admin-topbar { padding-inline:14px; } .admin-console .console-account>div { display:none; } .admin-console .console-metric-heading { font-size:8px; } .admin-console .admin-title h1 { font-size:27px; } }
+@media(prefers-reduced-motion:reduce) { .admin-console .console-metric { transition:none; } }
+
+.admin-console .admin-global-actions button>span { display:inline; color:inherit; font-size:inherit; margin-top:0; }
+.admin-console .console-account>button span { display:inline; color:inherit; font-size:inherit; }
+.admin-console .console-metric-heading>span { display:inline; font-size:inherit; }
