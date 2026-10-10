@@ -5,7 +5,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 process.env.SUPABASE_URL = "https://example.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-only-key";
 
-const { default: handler, requestUrl } = await import("../api/[...path].js");
+const { default: handler, requestUrl } = await import("../api/index.js");
 
 function request(url: string, query: VercelRequest["query"]): VercelRequest {
   return { method: "GET", url, query, headers: {} } as VercelRequest;
@@ -34,13 +34,13 @@ async function invoke(req: VercelRequest) {
 }
 
 test("health succeeds through the deployed handler shape", async () => {
-  const result = await invoke(request("/api/health", { "...path": "health" }));
+  const result = await invoke(request("/api/index?path=health", { path: "health" }));
   assert.equal(result.statusCode, 200);
   assert.equal(result.payload.status, "ok");
 });
 
 test("nested admin route reaches authentication instead of returning 404", async () => {
-  const result = await invoke(request("/api/v1/admin/clinics", { "...path": "v1/admin/clinics" }));
+  const result = await invoke(request("/api/index?path=v1/admin/clinics", { path: "v1/admin/clinics" }));
   assert.equal(result.statusCode, 401);
   assert.equal(result.payload.message, "Sessão não encontrada.");
 });

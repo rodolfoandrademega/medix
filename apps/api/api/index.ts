@@ -9,7 +9,7 @@ const appPromise = buildApp().then(async (app) => {
 });
 
 export function requestUrl(request: VercelRequest) {
-  // Vercel exposes [...path] as "...path"; some routing setups use "path".
+  // The rewrite supplies "path"; keep support for legacy catch-all captures.
   const capturedPath = request.query["...path"] ?? request.query.path;
   const path = Array.isArray(capturedPath) ? capturedPath.join("/") : capturedPath;
   const originalUrl = new URL(request.url || "/", "http://localhost");
