@@ -37,7 +37,10 @@ Redirect URLs: https://SEU-FRONT.vercel.app/**
 1. Importe o repositório GitHub na Vercel.
 2. Nome sugerido: `medix-api`.
 3. Em **Root Directory**, selecione `apps/api`.
-4. Não escolha framework; a pasta `api/` será detectada como Vercel Functions.
+4. Escolha o preset `Other`; a pasta `api/` será detectada como Vercel Functions.
+   O arquivo `apps/api/vercel.json` define o build e o diretório de saída `public`.
+   Esse diretório contém somente a página de apresentação da API; os handlers
+   continuam em `api/`. Não use `dist` ou a raiz como diretório público.
 5. Adicione as variáveis:
 
 ```text
