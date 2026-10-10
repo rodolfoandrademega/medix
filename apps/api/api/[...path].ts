@@ -8,15 +8,21 @@ const appPromise = buildApp().then(async (app) => {
   return app;
 });
 
-function requestUrl(request: VercelRequest) {
-  const path = Array.isArray(request.query.path) ? request.query.path.join("/") : String(request.query.path || "");
+export function requestUrl(request: VercelRequest) {
+  // Vercel exposes [...path] as "...path"; some routing setups use "path".
+  const capturedPath = request.query["...path"] ?? request.query.path;
+  const path = Array.isArray(capturedPath) ? capturedPath.join("/") : capturedPath;
+  const originalUrl = new URL(request.url || "/", "http://localhost");
+  const pathname = path
+    ? `/${path}`
+    : originalUrl.pathname.replace(/^\/api(?=\/|$)/, "") || "/";
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(request.query)) {
-    if (key === "path") continue;
+    if (key === "path" || key === "...path") continue;
     for (const item of Array.isArray(value) ? value : [value]) if (item !== undefined) query.append(key, item);
   }
   const suffix = query.toString();
-  return `/${path}${suffix ? `?${suffix}` : ""}`;
+  return `${pathname}${suffix ? `?${suffix}` : ""}`;
 }
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
