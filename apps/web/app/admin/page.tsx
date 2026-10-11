@@ -167,7 +167,51 @@ function ClinicEditor({ clinic, close, saved, remove }: { clinic: Clinic; close:
     <div className="editor-grid"><label>Nome da clínica<input required value={name} onChange={(event) => setName(event.target.value)} /></label><label>Plano<input value={plan} onChange={(event) => setPlan(event.target.value)} /></label></div>
     <section className="editor-section"><h3>Recursos liberados</h3><div className="module-grid">{moduleLabels.map(({ key, label }) => <label key={key} className="module-toggle"><input type="checkbox" checked={modules[key]} onChange={() => toggle(key)} /><span>{label}</span></label>)}</div></section>
     <section className="editor-section"><h3>Alerta na visão geral</h3><p>Use para comunicar manutenção, pendências de pagamento, novidades ou orientações. Deixe título e mensagem vazios para remover o aviso.</p><div className="editor-grid"><label>Título<input value={alertTitle} onChange={(event) => setAlertTitle(event.target.value)} placeholder="Ex.: Atualização programada" /></label><label>Prioridade<select value={alertLevel} onChange={(event) => setAlertLevel(event.target.value as "info" | "warning" | "important")}><option value="info">Informativo</option><option value="warning">Atenção</option><option value="important">Importante</option></select></label><label className="wide">Mensagem<textarea value={alertMessage} onChange={(event) => setAlertMessage(event.target.value)} placeholder="Ex.: O sistema passará por manutenção no domingo, das 22h às 23h." /></label></div></section>
+    <OwnerPasswordControl clinicId={clinic.id} clinicName={clinic.name} busy={saving} onBusy={setSaving} />
     <section className="console-danger-zone"><div><h3>Excluir clínica</h3><p>Remove permanentemente a clínica e seus dados.</p></div><button type="button" disabled={saving} onClick={remove}>Excluir clínica</button></section>
     {error && <div className="admin-notice console-notice error" role="alert">{error}</div>}<div className="editor-footer"><button type="button" disabled={saving} onClick={close}>Cancelar</button><button className="button" disabled={saving}>{saving ? "Salvando…" : "Salvar configurações"}</button></div>
   </form></div>;
+}
+
+function OwnerPasswordControl({ clinicId, clinicName, busy, onBusy }: { clinicId: string; clinicName: string; busy: boolean; onBusy: (value: boolean) => void }) {
+  const [owners, setOwners] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [selected, setSelected] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [success, setSuccess] = useState(false);
+  const loadOwners = useCallback(async () => {
+    setLoading(true); setLoadError("");
+    try {
+      const result = await api<{ owners: { id: string; name: string; email: string }[] }>(`/v1/admin/clinics/${clinicId}/owners`);
+      setOwners(result.owners); setSelected(result.owners.length === 1 ? result.owners[0].id : "");
+    } catch (error) { setLoadError(error instanceof Error ? error.message : "Não foi possível consultar o proprietário."); }
+    finally { setLoading(false); }
+  }, [clinicId]);
+  useEffect(() => { void loadOwners(); }, [loadOwners]);
+  async function resetOwnerPassword() {
+    setSuccess(false); setFeedback("");
+    if (!selected) return setFeedback("Selecione o proprietário.");
+    if (password.length < 12 || password.length > 128 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) return setFeedback("Use de 12 a 128 caracteres, com letras maiúsculas, minúsculas e números.");
+    if (password !== confirmation) return setFeedback("As senhas não conferem.");
+    const owner = owners.find(item => item.id === selected);
+    if (!window.confirm(`Redefinir a senha de ${owner?.email} (${clinicName})? Se esta conta acessar outras clínicas, a senha também mudará nesses acessos. Os colaboradores não serão alterados.`)) return;
+    onBusy(true);
+    try {
+      await api(`/v1/admin/clinics/${clinicId}/owner-password`, { method: "POST", body: JSON.stringify({ user_id: selected, password }) });
+      setPassword(""); setConfirmation(""); setSuccess(true); setFeedback("Senha redefinida. Informe a nova senha ao proprietário por um canal seguro.");
+    } catch (error) { setFeedback(error instanceof Error ? error.message : "Não foi possível redefinir a senha."); }
+    finally { onBusy(false); }
+  }
+  return <section className="editor-section owner-password-control"><h3>Senha do proprietário</h3><p>Defina uma nova senha de login. A senha atual nunca é exibida. A mudança vale para toda a conta do proprietário, inclusive outras clínicas vinculadas.</p>
+    {loading ? <p role="status">Consultando proprietário…</p> : loadError ? <div role="alert"><p>{loadError}</p><button type="button" onClick={() => void loadOwners()} disabled={busy}>Tentar novamente</button></div> : !owners.length ? <p>Nenhum proprietário vinculado a esta clínica.</p> : <>
+      <div className="editor-grid"><label className="wide">Conta do proprietário<select value={selected} disabled={busy} onChange={event => { setSelected(event.target.value); setFeedback(""); }}><option value="">Selecione uma conta</option>{owners.map(owner => <option key={owner.id} value={owner.id}>{owner.name} — {owner.email}</option>)}</select></label>
+        <label>Nova senha<input type="password" autoComplete="new-password" value={password} disabled={busy} onChange={event => setPassword(event.target.value)} maxLength={128} /></label><label>Confirmar nova senha<input type="password" autoComplete="new-password" value={confirmation} disabled={busy} onChange={event => setConfirmation(event.target.value)} maxLength={128} /></label></div>
+      <p>Use pelo menos 12 caracteres, incluindo maiúsculas, minúsculas e números. Contas de super admin devem usar a recuperação de senha.</p>
+      {feedback && <div className={`admin-notice console-notice ${success ? "success" : "error"}`} role={success ? "status" : "alert"}>{feedback}</div>}
+      <button type="button" className="owner-password-reset" disabled={busy || !selected || !password || !confirmation} onClick={() => void resetOwnerPassword()}>{busy ? "Aguarde…" : "Redefinir senha do proprietário"}</button>
+    </>}
+  </section>;
 }

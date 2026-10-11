@@ -2,11 +2,31 @@ import type { FastifyInstance } from "fastify";
 import { requirePlatformAdmin } from "../access.js";
 import { requireUser, type AuthenticatedRequest } from "../auth.js";
 import { database } from "../supabase.js";
+import { resetClinicOwnerPassword } from "../clinic-owner-password.js";
 
 const modules = ["overview", "agenda", "patients", "procedures", "team", "financial", "reports"];
 const statuses = ["pending", "active", "suspended", "inactive"];
 
 export async function registerAdminRoutes(app: FastifyInstance) {
+  app.get<{ Params: { id: string } }>("/v1/admin/clinics/:id/owners", { preHandler: requireUser }, async (request) => {
+    await requirePlatformAdmin((request as AuthenticatedRequest).userId);
+    const members = await database.from("clinic_members").select("user_id,profiles(full_name)").eq("clinic_id", request.params.id).eq("role", "owner");
+    if (members.error) throw members.error;
+    const owners = await Promise.all((members.data || []).map(async (member) => {
+      const account = await database.auth.admin.getUserById(member.user_id);
+      if (account.error) throw new Error("Não foi possível consultar o proprietário.");
+      return { id: member.user_id, name: (member.profiles as unknown as { full_name: string } | null)?.full_name || "Proprietário", email: account.data.user.email || "" };
+    }));
+    return { owners };
+  });
+
+  app.post<{ Params: { id: string }; Body: { user_id?: unknown; password?: unknown } }>("/v1/admin/clinics/:id/owner-password", { preHandler: requireUser }, async (request, reply) => {
+    const actor = (request as AuthenticatedRequest).userId;
+    await resetClinicOwnerPassword(actor, request.params.id, request.body?.user_id, request.body?.password);
+    app.log.info({ event: "clinic_owner_password_reset", actor, clinicId: request.params.id, targetUser: request.body.user_id }, "Senha do proprietário redefinida pelo super admin");
+    return reply.status(204).send();
+  });
+
   app.get("/v1/admin/clinics", { preHandler: requireUser }, async (request) => {
     const userId = (request as AuthenticatedRequest).userId; await requirePlatformAdmin(userId);
     const [{ data: profile, error: profileError }, { data, error }] = await Promise.all([

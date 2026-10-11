@@ -164,3 +164,7 @@
 .admin-console .admin-global-actions button>span { display:inline; color:inherit; font-size:inherit; margin-top:0; }
 .admin-console .console-account>button span { display:inline; color:inherit; font-size:inherit; }
 .admin-console .console-metric-heading>span { display:inline; font-size:inherit; }
+.owner-password-control { margin-top: 24px; padding: 20px; border: 1px solid #e8def0; border-radius: 14px; background: #f7f2fa; }
+.owner-password-control>p { font-size: 12px; line-height: 1.7; color: #82788e; }
+.owner-password-reset { min-height: 44px; padding: 12px 16px; border: 1px solid #d9c9e8; border-radius: 10px; background: #fff; color: #73588b; font-size: 12px; cursor: pointer; }
+.owner-password-reset:disabled { opacity: .5; cursor: not-allowed; }
