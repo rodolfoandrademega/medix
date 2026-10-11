@@ -42,9 +42,14 @@ export async function registerTeamRoutes(app: FastifyInstance) {
     ]);
     if (error) throw error; if (inviteError) throw inviteError;
     const emails = new Map<string, string>();
-    const users = await database.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (users.error) throw users.error;
-    users.data.users.forEach((user) => emails.set(user.id, user.email || ""));
+    // Leia somente contas vinculadas à clínica, sem listar toda a plataforma.
+    for (let offset = 0; offset < (members || []).length; offset += 10) {
+      await Promise.all((members || []).slice(offset, offset + 10).map(async member => {
+        const result = await database.auth.admin.getUserById(member.user_id);
+        if (result.error) throw result.error;
+        emails.set(member.user_id, result.data.user?.email || "");
+      }));
+    }
     return { members: [
       ...(members || []).map((member) => ({ ...member, member_role: member.role, email: emails.get(member.user_id) || "", full_name: (member.profiles as unknown as { full_name?: string })?.full_name || "", status: "active" })),
       ...(invites || []).map((invite) => ({ invite_id: invite.id, user_id: null, full_name: "", email: invite.email, member_role: invite.role, role: invite.role, permissions: invite.permissions, status: invite.status, created_at: invite.created_at })),
@@ -54,6 +59,10 @@ export async function registerTeamRoutes(app: FastifyInstance) {
   app.patch<{ Params: { id: string }; Body: Record<string, unknown> }>("/v1/team/:id", { preHandler: requireUser }, async (request) => {
     const currentUser = (request as AuthenticatedRequest).userId; const access = await getClinicAccess(currentUser, false, request.headers["x-clinic-id"]); requirePermission(access, "team");
     if (request.params.id === currentUser) throw Object.assign(new Error("Não altere seu próprio acesso por esta tela."), { statusCode: 400 });
+    const target = await database.from("clinic_members").select("role").eq("clinic_id", access.clinicId).eq("user_id", request.params.id).maybeSingle();
+    if (target.error) throw target.error;
+    if (!target.data) throw Object.assign(new Error("Colaborador não encontrado nesta clínica."), { statusCode: 404 });
+    if (target.data.role === "owner") throw Object.assign(new Error("O acesso do proprietário não pode ser alterado por esta tela."), { statusCode: 403 });
     const role = typeof request.body.role === "string" && roles.includes(request.body.role as typeof roles[number]) ? request.body.role : "professional";
     const permissions = request.body.permissions && typeof request.body.permissions === "object" ? Object.fromEntries(permissionKeys.map((key) => [key, (request.body.permissions as Record<string, unknown>)[key] === true])) : {};
     const level = ["info", "warning", "important"].includes(String(request.body.admin_alert_level)) ? request.body.admin_alert_level : "info";
@@ -89,6 +98,11 @@ export async function registerTeamRoutes(app: FastifyInstance) {
       const { data, error } = await database.auth.admin.createUser({ email, password, email_confirm: true });
       if (error) return reply.status(400).send({ message: error.message });
       targetUser = data.user.id;
+    }
+    if (existed) {
+      const target = await database.from("clinic_members").select("role").eq("clinic_id", access.clinicId).eq("user_id", targetUser).maybeSingle();
+      if (target.error) throw target.error;
+      if (target.data?.role === "owner" || targetUser === (request as AuthenticatedRequest).userId) throw Object.assign(new Error("Não altere o acesso do proprietário ou seu próprio acesso por esta tela."), { statusCode: 403 });
     }
     const { error: memberError } = await database.from("clinic_members").upsert({ clinic_id: access.clinicId, user_id: targetUser, role, permissions }, { onConflict: "clinic_id,user_id" });
     if (memberError) throw memberError;

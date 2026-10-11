@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../lib/api";
 import "./patients-workspace.css";
 import "./patient-edit.css";
@@ -31,20 +31,24 @@ export function PatientsWorkspace({ clinic, patients, onNew, onReload, permissio
   const [notice, setNotice] = useState("");
   const [noteTitle, setNoteTitle] = useState("Evolução clínica");
   const [noteContent, setNoteContent] = useState("");
+  const requestVersion = useRef(0);
   const filtered = useMemo(() => patients.filter((patient) => (patient.full_name + " " + (patient.email || "") + " " + (patient.phone || "")).toLowerCase().includes(search.toLowerCase())), [patients, search]);
 
   async function loadPatientWorkspace(patient: Patient) {
+    const version = ++requestVersion.current;
     setSelected(patient);
     setNotice("");
+    setAnamnesis(emptyAnamnesis); setRecords([]); setHistory([]);
     try {
       const result = await api<{ anamnesis: Partial<Anamnesis> | null; records: Record[]; history: { starts_at: string; status: string }[] }>(`/v1/patients/${patient.id}/details`);
+      if (version !== requestVersion.current) return;
       setAnamnesis({ ...emptyAnamnesis, ...(result.anamnesis || {}) });
       setRecords(result.records || []);
       setHistory(result.history || []);
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Erro ao carregar paciente."); }
+    } catch (error) { if (version === requestVersion.current) setNotice(error instanceof Error ? error.message : "Erro ao carregar paciente."); }
   }
 
-  useEffect(() => { if (selected) loadPatientWorkspace(selected); }, [clinic]);
+  useEffect(() => { requestVersion.current++; setSelected(null); setAnamnesis(emptyAnamnesis); setRecords([]); setHistory([]); }, [clinic]);
 
   async function savePatient(event: FormEvent) {
     event.preventDefault();

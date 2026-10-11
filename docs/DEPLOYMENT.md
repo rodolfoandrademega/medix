@@ -191,3 +191,8 @@ Não há envio por WhatsApp/e-mail ou push com o aplicativo fechado nesta versã
 ### Ativar push com a PWA fechada
 
 O suporte opcional a Web Push está descrito em [PWA_PUSH.md](PWA_PUSH.md). Exige migration 023, chaves VAPID e rotina no Supabase Cron; sem essas configurações, continua usando os avisos com painel aberto. O login permanece persistente com renovação da sessão, sujeito às políticas do Supabase e do dispositivo.
+
+## Privilégios das operações clínicas
+
+Após publicar a API com validação individual de anamnese/prontuário/histórico, execute `supabase/migrations/024_clinical_api_operation_permissions.sql`.
+Ela corrige `permission denied` na leitura de convites, fichas clínicas e evoluções e concede os privilégios de escrita necessários para pacientes/procedimentos. Não altera dados, RLS nem privilégios de `anon`/`authenticated`.

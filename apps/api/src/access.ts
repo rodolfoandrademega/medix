@@ -39,9 +39,14 @@ export async function getClinicAccess(userId: string, allowInactive = false, tar
   };
 }
 
+export function hasPermission(access: ClinicAccess, permission: string) {
+  const module = ["anamnesis", "records", "history"].includes(permission) ? "patients" : permission;
+  const modules = access.clinic.enabled_modules as Record<string, boolean> | undefined;
+  return modules?.[module] !== false && (access.role === "owner" || access.permissions[permission] === true);
+}
+
 export function requirePermission(access: ClinicAccess, permission: string) {
-  if (access.role === "owner") return;
-  if (access.permissions[permission] !== true) throw Object.assign(new Error("Você não tem permissão para esta operação."), { statusCode: 403 });
+  if (!hasPermission(access, permission)) throw Object.assign(new Error("Você não tem permissão para esta operação."), { statusCode: 403 });
 }
 
 export async function requirePlatformAdmin(userId: string) {
