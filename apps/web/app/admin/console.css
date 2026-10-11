@@ -1,9 +1,9 @@
-.admin-console { --console-purple:#7051e8; --console-ink:#2d273c; --console-muted:#82788e; background:#f8f7fb; color:var(--console-ink); -webkit-font-smoothing:antialiased; }
+.admin-console { --console-purple:#7051e8; --console-ink:#292438; --console-muted:#82788e; background:#fdfcf9; color:var(--console-ink); -webkit-font-smoothing:antialiased; }
 .admin-console button,.admin-console input,.admin-console select,.admin-console textarea { font-family:'DM Sans',sans-serif; }
 .admin-console button:focus-visible,.admin-console a:focus-visible { outline:3px solid #b39bea; outline-offset:3px; }
 .admin-console .admin-topbar { height:85px; padding:0 max(4vw,24px); background:#fdfcfe; }
 .admin-console .admin-logo { font-size:27px; font-weight:700; }
-.admin-console .admin-logo .brand-mark { background:#7051e8; font:700 27px/1 'DM Sans',sans-serif; padding-right:4px; padding-bottom:3px; position:relative; box-shadow:none; }
+.admin-console .admin-logo .brand-mark { background:#bda6ee; color:#2e2441; border-radius:10px; font:700 29px/1 'DM Sans',sans-serif; letter-spacing:-3px; padding-right:4px; padding-bottom:3px; position:relative; box-shadow:none; }
 .admin-console .brand-mark>span { position:absolute; font-size:13px; top:2px; right:4px; }
 .admin-console .admin-logo small { font-size:7px; letter-spacing:1.1px; margin-top:4px; }
 .admin-console .console-account { display:flex; align-items:center; gap:12px; text-align:left; }

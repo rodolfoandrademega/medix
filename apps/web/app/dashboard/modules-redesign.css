@@ -1,0 +1,89 @@
+/* Tratamento comum para os módulos, sem alterar grids de dados ou permissões. */
+.app-shell :is(.patients-workspace,.procedures-workspace,.agenda-workspace,.team-workspace) { max-width: none; color: var(--dash-ink); }
+.app-shell :is(.patient-module-head,.procedure-module-head,.agenda-module-head,.team-module-head) { align-items: center; padding: 25px 28px; margin-bottom: 22px; border: 1px solid #e8def0; border-radius: 18px; background: #f1eaf7; }
+.app-shell :is(.patient-module-head,.procedure-module-head,.agenda-module-head,.team-module-head) h2 { font-size: 31px; line-height: 1.2; margin: 7px 0 10px; font-weight: 500; letter-spacing: -1.2px; }
+.app-shell :is(.patient-module-head,.procedure-module-head,.agenda-module-head,.team-module-head) p:not(.section-kicker) { color: #81718c; line-height: 1.7; font-size: 12px; }
+.app-shell :is(.patient-list-panel,.patient-profile,.procedure-list-panel,.team-list,.day-calendar,.week-calendar,.month-calendar,.agenda-loading) { border-color: var(--dash-line); border-radius: 17px; background: #fff; }
+.app-shell :is(.patient-tabs,.calendar-toolbar) { background: #fff; border-color: var(--dash-line); border-radius: 13px; padding: 8px; }
+.app-shell :is(.patient-tabs button,.calendar-nav button,.calendar-views button,.procedure-filters button) { min-height: 40px; border-radius: 9px; font-size: 11px; font-weight: 500; color: var(--dash-muted); }
+.app-shell :is(.patient-tabs button.active,.calendar-views button.selected,.procedure-filters button.selected) { background: #f1eaf7; color: #8463a7; border-color: #e8def0; }
+.app-shell :is(.patient-list-tools,.procedure-tools) { padding: 20px 24px; border-color: var(--dash-line); }
+.app-shell :is(.patient-search,.procedure-search) { background: #fdfcf9; border-color: var(--dash-line); border-radius: 11px; min-height: 44px; }
+.app-shell :is(.patient-search,.procedure-search):focus-within { border-color: #ad92ce; box-shadow: 0 0 0 3px #bda6ee20; }
+.app-shell :is(.patient-search input,.procedure-search input) { background: transparent; color: var(--dash-ink); font-size: 12px; }
+.app-shell :is(.patient-table-head,.procedure-table-head) { background: #fdfcf9; padding: 15px 24px; color: #928398; font-weight: 500; letter-spacing: 1px; border-color: var(--dash-line); }
+.app-shell :is(.patient-table-row,.procedure-row) { padding: 18px 24px; border-color: #f0ebf2; }
+.app-shell :is(.patient-table-row,.procedure-row):hover { background: #fdfcf9; }
+.app-shell :is(.patient-open,.procedure-name)>div { min-width: 0; }
+.app-shell :is(.patient-open b,.procedure-name b,.team-list b) { font-weight: 500; font-size: 13px; overflow-wrap: anywhere; }
+.app-shell :is(.patient-contact,.patient-contact small,.procedure-name small,.team-list small) { overflow-wrap: anywhere; line-height: 1.5; }
+.app-shell :is(.patient-actions button,.procedure-actions button,.team-edit) { min-height: 36px; border-color: var(--dash-line); border-radius: 9px; color: #8463a7; font-size: 10px; font-weight: 500; padding: 8px 11px; }
+.app-shell :is(.patient-actions,.procedure-actions) button.danger { color: #b45f73; border-color: #edd8df; }
+.app-shell .purple-av, .app-shell .team-avatar { background: #eee5f7; color: #9976be; width: 36px; height: 36px; flex-shrink: 0; font-weight: 500; }
+.app-shell .procedure-summary { gap: 14px; margin-bottom: 22px; }
+.app-shell .procedure-summary article { border-color: var(--dash-line); border-radius: 16px; padding: 20px; }
+.app-shell .procedure-summary b { font-weight: 500; font-size: 27px; letter-spacing: -.8px; }
+.app-shell .procedure-summary span { color: var(--dash-muted); font-size: 11px; line-height: 1.5; }
+.app-shell .team-list article { padding: 20px 24px; gap: 14px; border-color: #f0ebf2; }
+.app-shell :is(.team-status,.procedure-status) { font-size: 10px; font-weight: 500; padding: 6px 10px; }
+.app-shell :is(.team-status:not(.pending),.procedure-status.active) { background: #eaf1e8; color: #617d5a; }
+.app-shell .team-status.pending { background: #f9eee2; color: #9d7954; }
+.app-shell :is(.patient-notice,.procedure-notice,.team-notice,.agenda-notice) { padding: 15px 18px; background: #f1eaf7; border: 1px solid #e8def0; border-radius: 12px; color: #73588b; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.app-shell .team-notice.error { background: #fbf0f1; border-color: #eed3d9; color: #a44c5e; }
+.app-shell :is(.patient-profile-empty,.procedure-empty,.team-empty,.agenda-loading) { padding: 45px 24px; color: var(--dash-muted); line-height: 1.7; }
+.app-shell .patient-profile-empty { border-color: #dcd0e7; border-radius: 17px; background: #fdfcf9; }
+.app-shell :is(.patient-profile-empty h3,.clinical-form h3,.records-area h3,.history-list h3) { font-weight: 500; }
+.app-shell .patient-profile>header { background: #fdfcf9; border-color: var(--dash-line); padding: 24px; }
+.app-shell :is(.clinical-form,.records-area,.history-list) { padding: 24px; }
+.app-shell .record-form, .app-shell .form-section { border-color: var(--dash-line); border-radius: 13px; background: #fdfcf9; padding: 20px; }
+.app-shell :is(.records-list article p,.history-list article b) { font-size: 12px; line-height: 1.7; }
+.app-shell .calendar-toolbar { padding: 14px; }
+.app-shell .calendar-nav strong { font-weight: 500; font-size: 13px; }
+.app-shell :is(.day-calendar>header,.week-head,.month-weekdays) { background: #fdfcf9; border-color: var(--dash-line); }
+.app-shell .day-calendar>header b { background: #f1eaf7; color: #8463a7; }
+.app-shell :is(.week-head .today b,.month-grid .today b) { background: #9976be; }
+.app-shell .schedule-card { background: #f5f0f9; border-radius: 9px; padding: 11px; gap: 4px; }
+.app-shell .schedule-card:hover { background: #eee5f7; }
+.app-shell .schedule-card b { font-weight: 500; font-size: 11px; }
+.app-shell .day-hour>div>button, .app-shell .week-day>button { min-height: 32px; }
+.app-shell :is(.modal-backdrop,.team-modal-layer,.procedure-modal-layer,.appointment-modal-layer) { background: #2b263b80; z-index: 60; padding: 24px; overflow-y: auto; }
+.app-shell :is(.modal,.team-editor,.procedure-editor,.appointment-details) { color: var(--dash-ink); background: #fdfcf9; border: 1px solid var(--dash-line); border-radius: 22px; padding: 30px; max-height: calc(100dvh - 48px); overflow-y: auto; box-shadow: 0 24px 80px #2b263b26; }
+.app-shell :is(.modal h2,.team-editor h2,.procedure-editor h2,.appointment-details h3) { font-weight: 500; font-size: 27px; line-height: 1.25; letter-spacing: -1px; padding-right: 24px; }
+.app-shell :is(.team-editor>p,.procedure-editor>p,.appointment-details>p) { color: #9a7cb5; font-weight: 500; letter-spacing: 1.3px; }
+.app-shell :is(.modal label,.team-editor>label,.procedure-form-grid label,.clinical-grid label,.record-form label,.appointment-details label) { color: #67576f; font-size: 11px; font-weight: 500; line-height: 1.6; }
+.app-shell :is(.modal,.team-editor,.procedure-editor,.appointment-details,.clinical-form,.record-form) :is(input:not([type="checkbox"]):not([type="color"]),select,textarea) { background: #fff; border: 1px solid #e3d9eb; border-radius: 10px; color: var(--dash-ink); padding: 12px; font-size: 13px; outline-color: #b7a2f4; }
+.app-shell :is(.modal,.team-editor,.procedure-editor,.appointment-details,.clinical-form,.record-form) textarea { line-height: 1.7; }
+.app-shell :is(.close,.team-close,.procedure-close,.appointment-close) { display: grid; place-items: center; min-width: 36px; min-height: 36px; border-radius: 10px; background: #f1eaf7; color: #8463a7; font-size: 24px; cursor: pointer; }
+.app-shell :is(.team-editor-actions,.procedure-editor-actions,.appointment-detail-actions) { border-top: 1px solid var(--dash-line); padding-top: 18px; gap: 12px; }
+.app-shell .permission-grid label { padding: 13px; border-color: var(--dash-line); border-radius: 10px; background: #fff; font-size: 11px; font-weight: 500; }
+.app-shell .permission-grid label:has(input:checked) { background: #f1eaf7; border-color: #d9c9e8; color: #73588b; }
+.app-shell .permission-grid input { accent-color: #9976be; }
+.app-shell .appointment-detail-grid>div { background: #fff; border-color: var(--dash-line); border-radius: 12px; padding: 15px; }
+.app-shell .appointment-detail-grid b { font-weight: 500; font-size: 12px; overflow-wrap: anywhere; }
+.app-shell .button { min-height: 44px; border-radius: 11px; background: #7051e8; font-size: 12px; font-weight: 500; }
+.app-shell .notification-bell { display: grid; place-items: center; width: 38px; height: 38px; background: #f1eaf7; border-color: #e8def0; color: #8463a7; }
+.app-shell .notification-popover { width: min(290px,calc(100vw - 32px)); padding: 20px; border-color: var(--dash-line); border-radius: 16px; background: #fdfcf9; }
+.app-shell .notification-popover b { font-weight: 500; font-size: 14px; }
+.app-shell .notification-popover p { font-size: 12px; line-height: 1.7; color: var(--dash-muted); }
+.app-shell .notification-popover select { min-height: 40px; border-radius: 9px; }
+@media(max-width:800px) {
+  .app-shell :is(.patient-module-head,.procedure-module-head,.agenda-module-head,.team-module-head) { padding: 22px 20px; align-items: flex-start; flex-direction: column; gap: 17px; }
+  .app-shell :is(.patient-module-head,.procedure-module-head,.agenda-module-head,.team-module-head) h2 { font-size: 28px; }
+  .app-shell :is(.patient-module-head,.procedure-module-head,.agenda-module-head,.team-module-head) .new-button { white-space: normal; }
+  .app-shell :is(.patient-list-tools,.procedure-tools,.patient-table-row,.procedure-row,.team-list article) { padding: 18px; }
+  .app-shell .procedure-actions { flex-wrap: wrap; }
+  .app-shell .team-list article>div { min-width: 0; }
+  .app-shell .notification-popover { position: fixed; top: 72px; right: 16px; }
+}
+@media(max-width:600px) {
+  .app-shell .procedure-summary { gap: 8px; }
+  .app-shell .procedure-summary article { padding: 14px 11px; }
+  .app-shell .procedure-summary b { font-size: 23px; }
+  .app-shell :is(.modal-backdrop,.team-modal-layer,.procedure-modal-layer,.appointment-modal-layer) { padding: 12px; }
+  .app-shell :is(.modal,.team-editor,.procedure-editor,.appointment-details) { padding: 26px 18px; border-radius: 18px; max-height: calc(100dvh - 24px); }
+  .app-shell :is(.modal,.team-editor,.procedure-editor,.appointment-details,.clinical-form,.record-form) :is(input:not([type="checkbox"]):not([type="color"]),select,textarea) { font-size: 16px; }
+  .app-shell :is(.patient-actions button,.procedure-actions button,.team-edit) { min-height: 40px; }
+  .app-shell :is(.team-editor-actions,.procedure-editor-actions,.appointment-detail-actions) { flex-wrap: wrap; }
+  .app-shell :is(.clinical-form,.records-area,.history-list,.patient-profile>header) { padding: 18px; }
+  .app-shell .records-list article time { float: none; display: block; margin-top: 5px; }
+}

@@ -30,15 +30,16 @@ export async function publicApi<T>(path: string, init: RequestInit = {}): Promis
 
 async function accessToken() {
   const { data } = await supabase?.auth.getSession() || { data: { session: null } };
-  return data.session?.access_token;
+  return data.session;
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!apiUrl) throw new ApiError("NEXT_PUBLIC_API_URL não foi configurada.", 0, "configuration");
-  const token = await accessToken();
-  if (!token) throw new ApiError("Sua sessão expirou. Entre novamente.", 401);
+  const session = await accessToken();
+  if (!session) throw new ApiError("Sua sessão expirou. Entre novamente.", 401);
+  const clinicId = window.localStorage.getItem(`medix-clinic:${session.user.id}`);
   return request<T>(path, {
     ...init,
-    headers: { ...(init.body !== undefined ? { "Content-Type": "application/json" } : {}), Authorization: `Bearer ${token}`, ...init.headers },
+    headers: { ...(init.body !== undefined ? { "Content-Type": "application/json" } : {}), ...init.headers, Authorization: `Bearer ${session.access_token}`, ...(clinicId ? { "X-Clinic-Id": clinicId } : {}) },
   });
 }

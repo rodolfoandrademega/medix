@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
 import type { FastifyInstance } from "fastify";
 import { config } from "../config.js";
 import { database } from "../supabase.js";
@@ -36,7 +35,7 @@ async function sendAccessEmail(email: string, password: string, loginUrl: string
 
 export async function registerTeamRoutes(app: FastifyInstance) {
   app.get("/v1/team", { preHandler: requireUser }, async (request) => {
-    const access = await getClinicAccess((request as AuthenticatedRequest).userId); requirePermission(access, "team");
+    const access = await getClinicAccess((request as AuthenticatedRequest).userId, false, request.headers["x-clinic-id"]); requirePermission(access, "team");
     const [{ data: members, error }, { data: invites, error: inviteError }] = await Promise.all([
       database.from("clinic_members").select("user_id,role,permissions,admin_alert_title,admin_alert_message,admin_alert_level,profiles(full_name,created_at)").eq("clinic_id", access.clinicId),
       database.from("clinic_invites").select("id,email,role,permissions,status,created_at").eq("clinic_id", access.clinicId).eq("status", "pending"),
@@ -53,7 +52,7 @@ export async function registerTeamRoutes(app: FastifyInstance) {
   });
 
   app.patch<{ Params: { id: string }; Body: Record<string, unknown> }>("/v1/team/:id", { preHandler: requireUser }, async (request) => {
-    const currentUser = (request as AuthenticatedRequest).userId; const access = await getClinicAccess(currentUser); requirePermission(access, "team");
+    const currentUser = (request as AuthenticatedRequest).userId; const access = await getClinicAccess(currentUser, false, request.headers["x-clinic-id"]); requirePermission(access, "team");
     if (request.params.id === currentUser) throw Object.assign(new Error("Não altere seu próprio acesso por esta tela."), { statusCode: 400 });
     const role = typeof request.body.role === "string" && roles.includes(request.body.role as typeof roles[number]) ? request.body.role : "professional";
     const permissions = request.body.permissions && typeof request.body.permissions === "object" ? Object.fromEntries(permissionKeys.map((key) => [key, (request.body.permissions as Record<string, unknown>)[key] === true])) : {};
@@ -74,24 +73,26 @@ export async function registerTeamRoutes(app: FastifyInstance) {
     }
     const permissions = Object.fromEntries(permissionKeys.map((key) => [key, request.body.permissions?.[key] === true]));
 
-    const access = await getClinicAccess((request as AuthenticatedRequest).userId); requirePermission(access, "team");
+    const access = await getClinicAccess((request as AuthenticatedRequest).userId, false, request.headers["x-clinic-id"]); requirePermission(access, "team");
 
-    const memberClient = createClient(config.supabaseUrl, config.supabaseServiceRoleKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-    const { error: inviteError } = await memberClient.rpc("invite_clinic_member", {
-      invited_email: email,
-      invited_role: role,
-      invited_permissions: permissions,
-    });
-    if (inviteError) return reply.status(403).send({ message: inviteError.message });
-
-    const { error: createError } = await database.auth.admin.createUser({ email, password, email_confirm: true });
-    if (createError) {
-      if (/already|registered|exists/i.test(createError.message)) return { message: "A conta já existia. As permissões foram atualizadas para esta clínica." };
-      return reply.status(400).send({ message: createError.message });
+    // Usa a clínica selecionada e validada pela API, sem uma RPC que escolhe
+    // implicitamente o primeiro workspace da conta.
+    let targetUser: string | undefined;
+    for (let page = 1; !targetUser; page++) {
+      const result = await database.auth.admin.listUsers({ page, perPage: 1000 });
+      if (result.error) throw result.error;
+      targetUser = result.data.users.find(user => user.email?.toLowerCase() === email)?.id;
+      if (result.data.users.length < 1000) break;
     }
+    const existed = Boolean(targetUser);
+    if (!targetUser) {
+      const { data, error } = await database.auth.admin.createUser({ email, password, email_confirm: true });
+      if (error) return reply.status(400).send({ message: error.message });
+      targetUser = data.user.id;
+    }
+    const { error: memberError } = await database.from("clinic_members").upsert({ clinic_id: access.clinicId, user_id: targetUser, role, permissions }, { onConflict: "clinic_id,user_id" });
+    if (memberError) throw memberError;
+    if (existed) return { message: "A conta já existia. O acesso foi atualizado nesta clínica; a senha atual foi mantida." };
 
     const loginUrl = `${config.allowedOrigin.split(",")[0].replace(/\/$/, "")}/auth`;
     const sent = await sendAccessEmail(email, password, loginUrl);

@@ -203,7 +203,7 @@
 .mobile-menu-trigger,
 .mobile-menu-layer { display: none; }
 
-@media (max-width: 600px) {
+@media (max-width: 800px) {
   .topbar-mobile-actions { gap: 8px; }
   .mobile-menu-trigger {
     display: inline-grid;

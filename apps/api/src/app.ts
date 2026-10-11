@@ -15,7 +15,7 @@ export async function buildApp() {
   await app.register(cors, {
     origin: config.allowedOrigin.split(",").map((origin) => origin.trim()),
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Authorization", "Content-Type"],
+    allowedHeaders: ["Authorization", "Content-Type", "X-Clinic-Id"],
   });
 
   app.get("/health", async () => ({ status: "ok", service: "medix-api", hosting: "vercel" }));

@@ -1,0 +1,25 @@
+.mx-onboarding .mx-auth-card { max-width: 440px; }
+.mx-onboarding-steps { list-style: none; padding: 0; margin: 32px 0 0; max-width: 370px; }
+.mx-onboarding-steps li { display: flex; align-items: flex-start; gap: 15px; padding: 17px 0; }
+.mx-onboarding-steps li+li { border-top: 1px solid #ffffff10; }
+.mx-onboarding-steps li>span { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 9px; border: 1px solid #ffffff15; color: #ac9bbd; font-size: 10px; }
+.mx-onboarding-steps .current>span { background: #c8b3ee; border-color: #c8b3ee; color: #362a49; }
+.mx-onboarding-steps strong { display: block; color: #eee5f8; font-size: 12px; font-weight: 500; }
+.mx-onboarding-steps p { color: #b4a5c4; font-size: 10px; line-height: 1.8; margin: 5px 0 0; }
+.mx-onboarding-progress { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 25px; }
+.mx-onboarding-progress>span:first-child { color: #9b7bbe; font-size: 8px; letter-spacing: 1.4px; font-weight: 600; }
+.mx-onboarding-progress>span:last-child { padding: 6px 10px; border: 1px solid #e8dff2; background: #f0eafa; color: #8261be; border-radius: 20px; font-size: 9px; }
+.mx-onboarding-slash { color: #b0a2bd; }
+.mx-onboarding-approval { display: flex; align-items: flex-start; gap: 11px; padding: 16px; background: #edf2ec; border: 1px solid #e0e7dd; border-radius: 10px; margin-top: 25px; }
+.mx-onboarding-approval>span { color: #75916c; font-size: 17px; }
+.mx-onboarding-approval strong { color: #56644f; font-size: 11px; font-weight: 600; }
+.mx-onboarding-approval p { color: #727d6e; font-size: 10px; line-height: 1.8; margin: 6px 0 0; }
+.mx-onboarding-loading { display: flex; align-items: center; gap: 12px; padding: 20px; border: 1px solid #e8dff2; border-radius: 10px; background: #f0eafa; color: #8261be; font-size: 12px; }
+.mx-onboarding-loading .mx-auth-spinner { border-color: #c8b3ee; border-top-color: #7051e8; flex-shrink: 0; }
+@media(max-width: 760px) {
+  .mx-onboarding-steps { display: none; }
+  .mx-onboarding .mx-auth-card { max-width: 520px; }
+  .mx-onboarding-progress { margin-bottom: 20px; }
+  .mx-onboarding-approval strong { font-size: 12px; }
+  .mx-onboarding-approval p, .mx-onboarding .mx-auth-field-hint { font-size: 11px; }
+}

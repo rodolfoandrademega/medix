@@ -73,15 +73,14 @@ export default function Home() {
     <section className="ml-hero ml-wrap" id="conteudo">
       <div className="ml-hero-copy"><div className="ml-eyebrow"><span className="ml-live-dot" /> MAIS LEVEZA NA ROTINA DA SUA CLÍNICA</div>
         <h1>Menos gestão.<br />Mais <span className="ml-care-word">cuidado.<svg viewBox="0 0 360 18" fill="none" aria-hidden="true"><path d="M3 12C93 1 213 1 355 9M24 16C115 7 245 7 331 14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg></span></h1>
-        <p>Da recepção ao consultório, conecte a rotina da sua clínica. Organize consultas, acompanhe o histórico dos pacientes e dê à sua equipe as informações de que ela precisa para atender melhor.</p>
+        <p>Agenda, pacientes e equipe em um só lugar. Uma rotina mais organizada para sua clínica e mais tempo para cuidar de quem importa.</p>
         <ul className="ml-hero-benefits" aria-label="Benefícios para sua clínica">
-          <li><Icon name="check" /><span><strong>Clareza em cada horário</strong> — veja consultas e acompanhe o status dos atendimentos.</span></li>
-          <li><Icon name="check" /><span><strong>Continuidade no cuidado</strong> — reúna cadastro, anamnese e prontuário do paciente.</span></li>
-          <li><Icon name="check" /><span><strong>Equipe em sintonia</strong> — organize os acessos conforme a função de cada pessoa.</span></li>
+          <li><Icon name="calendar" /><span><strong>Agenda organizada</strong><span>Dia, semana e mês</span></span></li>
+          <li><Icon name="users" /><span><strong>Pacientes por perto</strong><span>Histórico e prontuário</span></span></li>
+          <li><Icon name="shield" /><span><strong>Equipe conectada</strong><span>Acessos por pessoa</span></span></li>
         </ul>
         <div className="ml-hero-actions"><Link href="/auth?mode=signup" className="ml-button">Quero organizar minha clínica <Icon name="arrow" /></Link><a href="#recursos" className="ml-text-link">Conhecer a plataforma <span>↗</span></a></div>
         <div className="ml-hero-assurances"><span><Icon name="check" /> Sem instalação</span><span><Icon name="check" /> Acesse de onde estiver</span></div>
-        <div className="ml-hero-footnote"><span className="ml-footnote-icon"><Icon name="spark" /></span><p>Da recepção ao atendimento.<br /><strong>Uma rotina que funciona para toda a equipe.</strong></p></div>
       </div>
       <DashboardPreview />
     </section>

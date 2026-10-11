@@ -142,9 +142,9 @@
 .ml-hero {
   display:grid;
   grid-template-columns:.95fr 1.05fr;
-  gap:48px;
+  gap:56px;
   align-items:center;
-  padding-block:94px 84px
+  padding-block:76px 80px
 }
 
 .ml-eyebrow {
@@ -167,11 +167,11 @@
 }
 
 .ml-hero h1 {
-  font-size:clamp(56px,5.7vw,80px);
-  font-weight:600;
-  letter-spacing:-4.8px;
+  font-size:clamp(54px,5.2vw,72px);
+  font-weight:500;
+  letter-spacing:-3.6px;
   line-height:1.08;
-  margin:24px 0 30px
+  margin:22px 0 28px
 }
 
 .ml-care-word {
@@ -192,8 +192,8 @@
 .ml-hero-copy>p {
   color:var(--ml-muted);
   font-size:16px;
-  line-height:1.85;
-  max-width:440px;
+  line-height:1.8;
+  max-width:470px;
   margin:0
 }
 
@@ -306,7 +306,7 @@
   border-radius:12px;
   box-shadow:0 20px 45px #3f2c6220;
   overflow:hidden;
-  transform:rotate(-2deg);
+  transform:none;
   width:100%;
   min-height:362px
 }
@@ -2113,27 +2113,51 @@
 .ml-hero-benefits {
   list-style: none;
   padding: 0;
-  margin: 23px 0 0;
+  margin: 26px 0 0;
   display: grid;
-  gap: 11px;
-  max-width: 455px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  max-width: 500px;
 }
 .ml-hero-benefits li {
   display: flex;
-  align-items: flex-start;
-  gap: 9px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 15px 12px;
+  border: 1px solid #e8e2f0;
+  border-radius: 12px;
+  background: #eee8f8;
   font-size: 11px;
-  line-height: 1.8;
+  line-height: 1.5;
   color: var(--ml-muted);
 }
+.ml-hero-benefits li:nth-child(2) {
+  background: #edf2ec;
+  border-color: #e0e7dd;
+}
+.ml-hero-benefits li:nth-child(3) {
+  background: #f6eee6;
+  border-color: #eee3d7;
+}
 .ml-hero-benefits .ml-icon {
-  width: 15px;
-  height: 15px;
-  margin-top: 3px;
-  color: var(--ml-purple);
+  width: 20px;
+  height: 20px;
+  color: #8264b7;
+}
+.ml-hero-benefits li:nth-child(2) .ml-icon {
+  color: #75916c;
+}
+.ml-hero-benefits li:nth-child(3) .ml-icon {
+  color: #aa8960;
+}
+.ml-hero-benefits li>span>span {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
 }
 .ml-hero-benefits strong {
-  color: #50465f;
+  display: block;
+  color: var(--ml-ink);
   font-weight: 600;
 }
 .ml-feature-details {
@@ -2227,12 +2251,31 @@
 }
 @media (max-width: 540px) {
   .ml-hero-benefits {
-    gap: 12px;
+    gap: 8px;
   }
   .ml-hero-benefits li {
-    font-size: 12px;
+    font-size: 10px;
+    padding: 12px 9px;
+    gap: 10px;
+  }
+  .ml-hero-benefits li>span>span {
+    font-size: 9px;
   }
   .ml-feature-details li {
     font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .ml-hero-benefits {
+    grid-template-columns: 1fr;
+  }
+  .ml-hero-benefits li {
+    flex-direction: row;
+    align-items: center;
+    font-size: 12px;
+  }
+  .ml-hero-benefits li>span>span {
+    font-size: 11px;
   }
 }

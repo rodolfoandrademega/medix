@@ -1,0 +1,146 @@
+/* Identidade compartilhada com os novos fluxos de entrada da Medix. */
+.app-shell { --dash-ink: #292438; --dash-muted: #787180; --dash-line: #e9e3ec; background: #fdfcf9; color: var(--dash-ink); font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+.app-shell button, .app-shell input, .app-shell select, .app-shell textarea { font-family: inherit; }
+.app-shell button:focus-visible, .app-shell a:focus-visible { outline: 3px solid #b7a2f4; outline-offset: 3px; }
+.app-shell .sidebar { width: 250px; background: #2b263b; color: #e9e0f3; border: 0; padding: 30px 18px; min-height: 100dvh; }
+.app-shell .side-brand { color: #fff; font-size: 29px; letter-spacing: -1.4px; gap: 8px; }
+.app-shell .brand-mark { background: #bda6ee; color: #2e2441; border-radius: 11px; }
+.app-shell .dashboard-brand { display: inline-flex; align-items: center; gap: 9px; color: #292438; font-size: 30px; font-weight: 700; letter-spacing: -1.5px; }
+.app-shell .dashboard-brand-symbol { position: relative; display: grid; place-items: center; flex-shrink: 0; width: 35px; height: 35px; border-radius: 10px; background: #bda6ee; color: #2e2441; font-size: 29px; letter-spacing: -3px; padding-right: 4px; padding-bottom: 3px; line-height: 1; }
+.app-shell .dashboard-brand-symbol>span { position: absolute; right: 3px; top: 3px; font-size: 13px; letter-spacing: 0; }
+.app-shell .dashboard-brand-word>span { color: #c8b3ef; }
+.app-shell .dashboard-brand.side-brand { color: #fff; }
+.app-shell .dashboard-brand.mobile-brand { display: none; }
+.app-shell .clinic-switch { background: #ffffff07; border-color: #ffffff13; border-radius: 14px; padding: 13px; margin: 32px 0 24px; gap: 10px; }
+.app-shell .clinic-switch>div { min-width: 0; }
+.app-shell .clinic-switch b { font-size: 12px; overflow-wrap: anywhere; font-weight: 500; }
+.app-shell .clinic-switch small { font-size: 10px; color: #b5a7cb; }
+.app-shell .clinic-avatar { flex-shrink: 0; width: 36px; height: 36px; background: #bda6ee20; color: #d0bbed; border-radius: 11px; font-size: 11px; }
+.app-shell .side-nav { gap: 7px; }
+.app-shell .side-nav button { color: #c0b6ce; padding: 13px 12px; font-size: 13px; border-radius: 11px; font-weight: 500; }
+.app-shell .side-nav button:hover { background: #ffffff08; color: #fff; }
+.app-shell .side-nav button.selected { color: #e9dcff; background: #bda6ee19; box-shadow: inset 3px 0 #bda6ee; }
+.app-shell .help { background: #ffffff06; color: #d3c6e3; padding: 14px; border: 1px solid #ffffff0d; border-radius: 12px; }
+.app-shell .help small { color: #b5a7cb; }
+.app-shell .help>span { background: #bda6ee20; color: #cbb9de; }
+.app-shell .logout-button { color: #d4bad1!important; min-height: 44px; font-size: 12px; }
+.app-shell .sidebar-toggle { top: 105px; border-color: #e0d5ed; }
+.app-shell .topbar { height: 82px; background: #fdfcf9; border-color: var(--dash-line); padding: 0 36px; }
+.dashboard-location { display: grid; gap: 6px; }
+.dashboard-location span { color: #9c80bd; font-size: 9px; letter-spacing: 1.6px; font-weight: 600; }
+.dashboard-location b { font-size: 14px; font-weight: 500; }
+.app-shell .profile { gap: 10px; padding: 0; }
+.app-shell .profile>span { height: 38px; width: 38px; background: #eee6f6; color: #8466a8; font-size: 12px; }
+.app-shell .profile b { font-size: 12px; font-weight: 500; }
+.app-shell .profile small { color: var(--dash-muted); font-size: 10px; }
+.app-shell .content { padding: 30px clamp(20px, 3vw, 44px) 44px; max-width: 1540px; margin: auto; }
+.app-shell .page-header { background: #f1eaf7; border: 1px solid #e8def0; border-radius: 20px; padding: 28px 30px; margin-bottom: 24px; }
+.app-shell .workspace-label { color: #887492; font-size: 11px; line-height: 1.7; flex-wrap: wrap; }
+.app-shell .workspace-label span { color: #8463a7; font-weight: 600; }
+.app-shell .page-header h1 { font-size: clamp(28px, 3vw, 40px); font-weight: 500; letter-spacing: -1.6px; line-height: 1.2; margin: 10px 0; }
+.app-shell .page-header h1 span { color: #a687c2; }
+.app-shell .workspace-welcome { font-size: 12px; color: #81718c; line-height: 1.7; }
+.app-shell .section-kicker { color: #9a7cb5!important; font-size: 9px!important; letter-spacing: 1.5px; font-weight: 600; }
+.app-shell .metrics { gap: 14px; margin-bottom: 24px; grid-template-columns: repeat(4, minmax(0,1fr)); }
+.app-shell .metrics .metric { min-height: 140px; padding: 22px 18px; border-radius: 17px; border-color: var(--dash-line); gap: 12px; }
+.app-shell .metric-icon { width: 38px; height: 38px; border-radius: 12px; }
+.app-shell .metric p { font-size: 11px; color: var(--dash-muted); line-height: 1.5; }
+.app-shell .metric h2 { font-size: 29px; font-weight: 500; margin: 8px 0; letter-spacing: -1px; }
+.app-shell .metric em { color: #918696; font-size: 10px; line-height: 1.5; }
+.app-shell .metric-icon.purple, .app-shell .quick-icon.purple, .app-shell .insight-icon { background: #eee5f7; color: #9976be; }
+.app-shell .metric-icon.orange, .app-shell .quick-icon.orange { background: #f9eee2; color: #b88e65; }
+.app-shell .metric-icon.green, .app-shell .quick-icon.green { background: #eaf1e8; color: #7c9a76; }
+.app-shell .metric-icon.blue, .app-shell .quick-icon.blue, .app-shell .insight-icon.neutral { background: #e9eef5; color: #8398b4; }
+.app-shell .quick-actions { display: block; padding: 24px; background: #fff; border-radius: 18px; border-color: var(--dash-line); margin-bottom: 24px; }
+.app-shell .quick-actions h2 { font-size: 19px; font-weight: 500; color: var(--dash-ink); letter-spacing: -.6px; }
+.app-shell .quick-action-buttons { display: grid; grid-template-columns: repeat(auto-fit,minmax(170px,1fr)); gap: 12px; margin-top: 19px; }
+.app-shell .quick-action-buttons button { min-width: 0; min-height: 78px; padding: 14px; border-radius: 13px; border-color: var(--dash-line); background: #fdfcf9; gap: 12px; }
+.app-shell .quick-action-buttons b { font-size: 12px; font-weight: 500; white-space: normal; }
+.app-shell .quick-action-buttons small { font-size: 10px; color: #908795; white-space: normal; line-height: 1.5; }
+.app-shell .quick-icon { width: 37px; height: 37px; border-radius: 11px; }
+.app-shell .panel { border-color: var(--dash-line); border-radius: 18px; overflow: hidden; }
+.app-shell .dash-grid { gap: 20px; margin-bottom: 24px; }
+.app-shell .panel header { padding: 24px; gap: 12px; }
+.app-shell .panel h2 { font-size: 19px; font-weight: 500; letter-spacing: -.6px; }
+.app-shell .panel header p { font-size: 11px; line-height: 1.6; color: var(--dash-muted); }
+.app-shell .text-action { min-height: 32px; white-space: nowrap; }
+.app-shell .insight-list { padding: 0 24px 24px; gap: 12px; }
+.app-shell .insight-list>div { background: #fdfcf9; border-color: var(--dash-line); padding: 17px; border-radius: 13px; }
+.app-shell .insight-list b { font-weight: 500; font-size: 12px; }
+.app-shell .insight-list small { font-size: 11px; color: var(--dash-muted); line-height: 1.7; }
+.app-shell .empty-state { padding: 40px 24px; }
+.app-shell .empty-state b { background: #f1eaf7; color: #9976be; width: 42px; height: 42px; border-radius: 13px; }
+.app-shell .empty-state p { font-size: 13px; font-weight: 500; }
+.app-shell .empty-state small { font-size: 11px; line-height: 1.7; }
+.app-shell .timeline, .app-shell .patient-rows { padding-left: 24px; padding-right: 24px; }
+.app-shell .appointment, .app-shell .patient-row { min-height: 65px; height: auto; padding-top: 12px; padding-bottom: 12px; }
+.app-shell .appointment b, .app-shell .patient-row b { font-size: 12px; overflow-wrap: anywhere; }
+.app-shell .clinic-alert { border-radius: 16px; box-shadow: none; padding: 20px; }
+.app-shell .new-button { border-radius: 11px; min-height: 44px; font-size: 12px; background: #7051e8; }
+.app-shell :is(.patient-module-head,.procedure-module-head,.agenda-module-head,.team-module-head) h2 { font-weight: 500; letter-spacing: -1px; }
+.app-shell .mobile-menu-drawer { background: #2b263b; color: #e9e0f3; }
+.app-shell .mobile-menu-drawer .dashboard-brand { color: #fff; }
+.app-shell .mobile-clinic { background: #ffffff07; border-color: #ffffff13; border-radius: 14px; padding: 14px; }
+.app-shell .mobile-clinic>div { min-width: 0; }
+.app-shell .mobile-clinic b { font-weight: 500; overflow-wrap: anywhere; }
+.app-shell .mobile-clinic small { color: #b5a7cb; }
+.app-shell .mobile-menu-drawer nav { gap: 7px; }
+.app-shell .mobile-menu-drawer nav button { color: #c0b6ce; border-radius: 11px; min-height: 48px; font-weight: 500; }
+.app-shell .mobile-menu-drawer nav button.selected { color: #e9dcff; background: #bda6ee19; box-shadow: inset 3px 0 #bda6ee; }
+.app-shell .mobile-menu-head button { background: #bda6ee19; color: #d0bbed; width: 40px; height: 40px; border-radius: 11px; }
+.app-shell .mobile-menu-help { background: #ffffff06; border: 1px solid #ffffff0d; border-radius: 12px; }
+.app-shell .mobile-menu-help>span { background: #bda6ee20; color: #cbb9de; }
+.app-shell .mobile-menu-help small { color: #b5a7cb; }
+.app-shell .mobile-logout-button { min-height: 44px; color: #d4bad1; background: #ffffff06; border-color: #ffffff13; border-radius: 11px; }
+@media(min-width:801px) { .app-shell .sidebar { position: sticky; top: 0; height: 100dvh; } }
+@media(max-width:1150px) and (min-width:801px) { .app-shell .metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .app-shell .dash-grid { grid-template-columns: 1fr; } }
+@media(max-width:800px) {
+  .app-shell .topbar { height: 68px; padding: 0 20px; }
+  .dashboard-location { display: none; }
+  .app-shell .mobile-brand { display: flex; align-items: center; gap: 7px; color: #292438; font-size: 24px; letter-spacing: -1px; }
+  .app-shell .dashboard-brand.mobile-brand { display: inline-flex; font-size: 26px; letter-spacing: -1.5px; }
+  .app-shell .mobile-brand .dashboard-brand-symbol { width: 31px; height: 31px; font-size: 25px; }
+  .app-shell .mobile-brand .brand-mark { width: 31px; height: 31px; font-size: 21px; }
+  .app-shell .content { padding: 22px 20px 30px; }
+  .app-shell .page-header { padding: 24px; border-radius: 17px; }
+  .app-shell .metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-shell .metrics .metric { min-height: 132px; }
+  .app-shell .metrics .metric-icon { display: grid; }
+  .app-shell .dash-grid { grid-template-columns: 1fr; }
+  .app-shell .profile>span { width: 32px; height: 32px; }
+  .app-shell .mobile-menu-trigger { background: #f1eaf7; border-color: #e8def0; color: #8463a7; border-radius: 11px; width: 40px; height: 40px; }
+  .app-shell .mobile-menu-drawer { height: 100dvh; padding: calc(24px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom)); }
+}
+@media(max-width:600px) {
+  .app-shell { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .app-shell .content { padding: 18px 16px 28px!important; }
+  .app-shell .topbar { height: 64px!important; padding: 0 16px; }
+  .app-shell .sidebar { min-height: 0; height: calc(72px + env(safe-area-inset-bottom))!important; padding-bottom: calc(6px + env(safe-area-inset-bottom))!important; background: #2b263b!important; border-color: #ffffff13!important; }
+  .app-shell .side-nav button { color: #c0b6ce; border-radius: 10px; }
+  .app-shell .side-nav button.selected { background: #bda6ee19; color: #e9dcff; box-shadow: none; }
+  .app-shell .page-header { padding: 22px 20px; margin-bottom: 18px; }
+  .app-shell .page-header h1 { font-size: 30px!important; letter-spacing: -1.2px; }
+  .app-shell .workspace-label { font-size: 10px; }
+  .app-shell .workspace-welcome { font-size: 11px; }
+  .app-shell .metrics { gap: 10px; margin-bottom: 18px; }
+  .app-shell .metrics .metric { flex-direction: column; min-height: 155px; padding: 16px; gap: 10px; }
+  .app-shell .metric h2 { font-size: 27px; margin: 5px 0; }
+  .app-shell .metric-icon { width: 31px; height: 31px; }
+  .app-shell .quick-actions { padding: 20px 16px; margin-bottom: 18px; }
+  .app-shell .quick-action-buttons { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+  .app-shell .quick-action-buttons button { align-items: flex-start; flex-direction: column; padding: 13px; gap: 10px; position: relative; }
+  .app-shell .quick-action-buttons button>svg { position: absolute; right: 12px; top: 23px; }
+  .app-shell .quick-action-buttons b { font-size: 11px; }
+  .app-shell .panel header { padding: 20px 17px; flex-wrap: wrap; }
+  .app-shell .panel h2 { font-size: 18px; }
+  .app-shell .insight-list { padding: 0 17px 20px; }
+  .app-shell .timeline, .app-shell .patient-rows { padding-left: 17px; padding-right: 17px; }
+  .app-shell .patient-row { flex-wrap: wrap; }
+  .app-shell .patient-row>span:not(.avatar) { overflow-wrap: anywhere; }
+  .app-shell .clinic-alert { flex-wrap: wrap; padding: 16px; gap: 10px; }
+  .app-shell .clinic-alert-copy { min-width: 0; flex-basis: calc(100% - 40px); }
+  .app-shell .clinic-alert>button { margin-left: auto; min-height: 36px; }
+  .app-shell .modal-backdrop { z-index: 60; padding: 12px; }
+  .app-shell .modal { max-width: 100%; }
+}
+@media(prefers-reduced-motion:reduce) { .app-shell .quick-action-buttons button { transition: none; } }

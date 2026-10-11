@@ -4,6 +4,8 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "../../lib/api";
+import { rememberClinic } from "../../lib/clinic-selection";
+import LoadingScreen from "../components/LoadingScreen";
 import { signOut as endSession } from "../../lib/auth";
 import { PatientsWorkspace } from "./patients-workspace";
 import { ProceduresWorkspace, type Procedure } from "./procedures-workspace";
@@ -17,6 +19,8 @@ import "./live.css";
 import "./mobile-fix.css";
 import "./overview-enhancements.css";
 import "./sidebar-collapse.css";
+import "./dashboard-redesign.css";
+import "./modules-redesign.css";
 
 type Patient = { id: string; full_name: string; phone: string | null; email: string | null; created_at?: string; preferred_name?: string | null; birth_date?: string | null };
 type Appointment = { id: string; patient_id: string; starts_at: string; status: string };
@@ -27,6 +31,7 @@ type Workspace = { id: string; name: string; role: string; user: string; modules
 type IconName = "home" | "calendar" | "users" | "team" | "wallet" | "chart" | "plus" | "refresh" | "arrow" | "clock" | "spark" | "menu" | "close";
 
 const initials = (value: string) => value.split(" ").map((word) => word[0]).slice(0, 2).join("").toUpperCase() || "M";
+const roleLabel = (role: string) => ({ owner: "Proprietário", admin: "Administrador", professional: "Profissional", receptionist: "Recepção" }[role] || "Colaborador");
 const moduleDefaults: Modules = { overview: true, agenda: true, patients: true, procedures: true, team: true, financial: true, reports: true };
 const permissionDefaults: Permissions = { patients: true, anamnesis: true, records: true, history: true, agenda: true, procedures: true, team: false, financial: false, reports: false };
 const navItems: { label: string; icon: IconName; module: ModuleKey }[] = [
@@ -53,6 +58,10 @@ function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
   return <svg {...common}>{paths[name]}</svg>;
 }
 
+function DashboardBrand({ className = "" }: { className?: string }) {
+  return <Link href="/" className={`dashboard-brand ${className}`} aria-label="Medix, página inicial"><span className="dashboard-brand-symbol">m<span>+</span></span><span className="dashboard-brand-word">medix<span>.</span></span></Link>;
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
@@ -75,6 +84,7 @@ export default function Dashboard() {
       if (!membership) return router.replace("/onboarding");
       if (membership.status !== "active") return router.replace("/pending-approval");
       const clinic = { id: String(membership.id), name: String(membership.name) };
+      await rememberClinic(clinic.id);
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const end = new Date(start); end.setDate(end.getDate() + 1);
       const dashboard = await api<{ patients: Patient[]; appointments: Appointment[] }>(`/v1/dashboard?from=${encodeURIComponent(start.toISOString())}&to=${encodeURIComponent(end.toISOString())}`);
@@ -101,7 +111,7 @@ export default function Dashboard() {
     await endSession();
     router.replace("/auth");
   }
-  if (!workspace) return <main className="loading-screen"><span className="brand-mark">M</span><p>{error || "Carregando sua clínica..."}</p>{error && <button className="button" onClick={load}>Tentar novamente</button>}</main>;
+  if (!workspace) return <LoadingScreen title="Conectando sua clínica." description="Estamos carregando sua agenda, pacientes e os recursos liberados para sua conta." error={error} retry={load} />;
 
   // O super admin libera o módulo para a clínica; o proprietário sempre pode administrá-lo.
   // Para os demais colaboradores, a permissão individual continua sendo obrigatória.
@@ -111,24 +121,24 @@ export default function Dashboard() {
   return <main className={"app-shell " + (sidebarCollapsed ? "sidebar-collapsed" : "")}>
     <aside className="sidebar">
       <button className="sidebar-toggle" title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"} aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"} onClick={() => setSidebarCollapsed((current) => !current)}>{sidebarCollapsed ? "›" : "‹"}</button>
-      <Link href="/" className="brand side-brand"><span className="brand-mark">M</span> medix</Link>
-      <div className="clinic-switch"><span className="clinic-avatar">{initials(workspace.name)}</span><div><b>{workspace.name}</b><small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></div></div>
-      <nav className="side-nav">{visibleNavItems.map((item) => <button key={item.label} className={page === item.label ? "selected" : ""} onClick={() => setPage(item.label)}><i><Icon name={item.icon} /></i><span>{item.label}</span></button>)}</nav>
+      <DashboardBrand className="side-brand" />
+      <div className="clinic-switch"><span className="clinic-avatar">{initials(workspace.name)}</span><div><b>{workspace.name}</b><small>{roleLabel(workspace.role)}</small></div></div>
+      <nav className="side-nav" aria-label="Menu da clínica">{visibleNavItems.map((item) => <button key={item.label} title={item.label} aria-label={item.label} aria-current={page === item.label ? "page" : undefined} className={page === item.label ? "selected" : ""} onClick={() => setPage(item.label)}><i><Icon name={item.icon} /></i><span>{item.label}</span></button>)}</nav>
       <div className="side-bottom"><div className="help"><span>?</span><div><b>Central de ajuda</b><small>Precisa de suporte?</small></div></div><button className="logout-button" onClick={signOut}>Sair da conta <span>→</span></button></div>
     </aside>
     <section className="dashboard">
-      <header className="topbar"><div className="mobile-brand"><span className="brand-mark">M</span> medix</div><div className="search">⌕ <input placeholder="Buscar pacientes..." /></div><div className="topbar-mobile-actions"><AppointmentNotifications clinic={workspace.id} /><button className="mobile-menu-trigger" aria-label="Abrir menu" onClick={() => setMobileMenuOpen(true)}><Icon name="menu" /></button><button className="profile"><span>{initials(workspace.user)}</span><b>{workspace.user}<small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></b></button></div></header>
+<header className="topbar"><DashboardBrand className="mobile-brand" /><div className="dashboard-location"><span>SEU ESPAÇO NA MEDIX</span><b>{page}</b></div><div className="topbar-mobile-actions"><AppointmentNotifications clinic={workspace.id} /><button className="mobile-menu-trigger" aria-label="Abrir menu" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)}><Icon name="menu" /></button><div className="profile" title={`${workspace.user} · ${roleLabel(workspace.role)}`}><span>{initials(workspace.user)}</span><b>{workspace.user}<small>{roleLabel(workspace.role)}</small></b></div></div></header>
       {platformRefreshAvailable && <div className="platform-refresh"><span>Uma atualização da Medix está disponível.</span><button onClick={() => { window.sessionStorage.setItem("medix-platform-release", workspace.refreshRequestedAt); window.location.reload(); }}>Atualizar agora</button></div>}
       <div className="content">
         {page !== "Pacientes" && page !== "Procedimentos" && page !== "Agenda" && page !== "Colaboradores" && <div className="page-header"><div>{page === "Visão geral" ? <><p className="workspace-label"><span>{workspace.name}</span> · {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p><h1>Olá, {workspace.user.split(" ")[0]} <span>✦</span></h1><small className="workspace-welcome">Você está na visão geral de <b>{workspace.name}</b>.</small></> : <><p>{workspace.name}</p><h1>{page}</h1></>}</div>{page !== "Visão geral" && <div className="header-actions">{can("patients") && <button className="new-button secondary" onClick={() => setNewPatient(true)}><Icon name="plus" size={16} /> Novo paciente</button>}{can("agenda") && <button className="new-button" onClick={() => setNewAppointment(true)}><Icon name="calendar" size={16} /> Novo agendamento</button>}</div>}</div>}
-        {page === "Visão geral" ? <Overview patients={patients} appointments={appointments} alert={workspace.alert} memberAlert={workspace.memberAlert} openPatient={() => setNewPatient(true)} openAppointment={() => setNewAppointment(true)} goPatients={() => setPage("Pacientes")} refresh={refresh} refreshing={refreshing} canPatients={can("patients")} canAgenda={can("agenda")} /> : page === "Agenda" && can("agenda") ? <AgendaWorkspace clinic={workspace.id} onNew={() => setNewAppointment(true)} /> : page === "Pacientes" && can("patients") ? <PatientsWorkspace clinic={workspace.id} patients={patients} onNew={() => setNewPatient(true)} onReload={load} permissions={workspace.permissions} /> : page === "Procedimentos" && can("procedures") ? <ProceduresWorkspace clinic={workspace.id} /> : page === "Colaboradores" && can("team") ? <TeamWorkspace /> : <section className="panel coming"><span>✦</span><h2>{page}</h2><p>Este módulo não está liberado para esta clínica.</p></section>}
+        {page === "Visão geral" ? <Overview patients={patients} appointments={appointments} alert={workspace.alert} memberAlert={workspace.memberAlert} openPatient={() => setNewPatient(true)} openAppointment={() => setNewAppointment(true)} goPatients={() => setPage("Pacientes")} goAgenda={() => setPage("Agenda")} refresh={refresh} refreshing={refreshing} canPatients={can("patients")} canAgenda={can("agenda")} /> : page === "Agenda" && can("agenda") ? <AgendaWorkspace clinic={workspace.id} onNew={() => setNewAppointment(true)} /> : page === "Pacientes" && can("patients") ? <PatientsWorkspace clinic={workspace.id} patients={patients} onNew={() => setNewPatient(true)} onReload={load} permissions={workspace.permissions} /> : page === "Procedimentos" && can("procedures") ? <ProceduresWorkspace clinic={workspace.id} /> : page === "Colaboradores" && can("team") ? <TeamWorkspace /> : <section className="panel coming"><span>✦</span><h2>{page}</h2><p>Este módulo não está liberado para esta clínica.</p></section>}
       </div>
     </section>
     <div className={"mobile-menu-layer " + (mobileMenuOpen ? "is-open" : "")} aria-hidden={!mobileMenuOpen}>
       <button className="mobile-menu-backdrop" aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)} />
       <section className="mobile-menu-drawer">
-        <div className="mobile-menu-head"><div className="brand"><span className="brand-mark">M</span> medix</div><button aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)}><Icon name="close" /></button></div>
-        <div className="mobile-clinic"><span className="clinic-avatar">{initials(workspace.name)}</span><div><b>{workspace.name}</b><small>{workspace.role === "owner" ? "Administradora" : workspace.role}</small></div></div>
+        <div className="mobile-menu-head"><DashboardBrand /><button aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)}><Icon name="close" /></button></div>
+        <div className="mobile-clinic"><span className="clinic-avatar">{initials(workspace.name)}</span><div><b>{workspace.name}</b><small>{roleLabel(workspace.role)}</small></div></div>
         <nav>{visibleNavItems.map((item) => <button key={item.label} className={page === item.label ? "selected" : ""} onClick={() => { setPage(item.label); setMobileMenuOpen(false); }}><Icon name={item.icon} /><span>{item.label}</span></button>)}</nav>
         <div className="mobile-menu-help"><span>?</span><div><b>Central de ajuda</b><small>Precisa de suporte?</small></div></div><button className="mobile-logout-button" onClick={signOut}>Sair da conta <span>→</span></button>
       </section>
@@ -138,7 +148,7 @@ export default function Dashboard() {
   </main>;
 }
 
-function Overview({ patients, appointments, alert, memberAlert, openPatient, openAppointment, goPatients, refresh, refreshing, canPatients, canAgenda }: { patients: Patient[]; appointments: Appointment[]; alert: { title: string; message: string; level: string } | null; memberAlert: { title: string; message: string; level: string } | null; openPatient: () => void; openAppointment: () => void; goPatients: () => void; refresh: () => void; refreshing: boolean; canPatients: boolean; canAgenda: boolean }) {
+function Overview({ patients, appointments, alert, memberAlert, openPatient, openAppointment, goPatients, goAgenda, refresh, refreshing, canPatients, canAgenda }: { patients: Patient[]; appointments: Appointment[]; alert: { title: string; message: string; level: string } | null; memberAlert: { title: string; message: string; level: string } | null; openPatient: () => void; openAppointment: () => void; goPatients: () => void; goAgenda: () => void; refresh: () => void; refreshing: boolean; canPatients: boolean; canAgenda: boolean }) {
   const confirmed = appointments.filter((appointment) => appointment.status === "confirmed").length;
   const appointmentNote = appointments.length ? confirmed + " confirmada" + (confirmed === 1 ? "" : "s") : "Agenda disponível";
   const appointmentText = appointments.length ? appointments.length + " atendimento" + (appointments.length === 1 ? "" : "s") + " programado" + (appointments.length === 1 ? "" : "s") : "Organize os próximos atendimentos.";
@@ -156,7 +166,7 @@ function Overview({ patients, appointments, alert, memberAlert, openPatient, ope
       {canPatients && <><button onClick={openPatient}><span className="quick-icon blue"><Icon name="plus" /></span><span><b>Novo paciente</b><small>Crie um cadastro</small></span><Icon name="arrow" size={16} /></button><button onClick={goPatients}><span className="quick-icon orange"><Icon name="users" /></span><span><b>Ver pacientes</b><small>Acesse os cadastros</small></span><Icon name="arrow" size={16} /></button></>}
       <button onClick={refresh}><span className="quick-icon green"><Icon name="refresh" /></span><span><b>{refreshing ? "Atualizando..." : "Atualizar painel"}</b><small>Consulte novos dados</small></span><Icon name="arrow" size={16} /></button>
     </div></section>
-    <div className="dash-grid dash-grid-updated"><section className="panel"><header><div><p className="section-kicker">AGENDA</p><h2>Consultas de hoje</h2><p>{appointmentText}</p></div><button className="text-action">Ver agenda <Icon name="arrow" size={14} /></button></header><TodayAppointments appointments={appointments} patients={patients} /></section><section className="panel insights-panel"><header><div><p className="section-kicker">PANORAMA</p><h2>Sua clínica em foco</h2><p>Acompanhe os próximos passos.</p></div></header><div className="insight-list"><div><span className="insight-icon"><Icon name="spark" size={16} /></span><p><b>{patients.length ? "Cadastros atualizados" : "Comece por aqui"}</b><small>{patients.length ? "Use os dados para manter a agenda organizada." : "Cadastre seu primeiro paciente para iniciar."}</small></p></div><div><span className="insight-icon neutral"><Icon name="calendar" size={16} /></span><p><b>{appointments.length ? "Agenda em andamento" : "Dia livre"}</b><small>{appointments.length ? "Confira seus horários antes do próximo atendimento." : "Inclua uma consulta quando estiver pronto."}</small></p></div></div></section></div>
+    <div className="dash-grid dash-grid-updated"><section className="panel"><header><div><p className="section-kicker">AGENDA</p><h2>Consultas de hoje</h2><p>{appointmentText}</p></div><button onClick={goAgenda} className="text-action">Ver agenda <Icon name="arrow" size={14} /></button></header><TodayAppointments appointments={appointments} patients={patients} /></section><section className="panel insights-panel"><header><div><p className="section-kicker">PANORAMA</p><h2>Sua clínica em foco</h2><p>Acompanhe os próximos passos.</p></div></header><div className="insight-list"><div><span className="insight-icon"><Icon name="spark" size={16} /></span><p><b>{patients.length ? "Cadastros atualizados" : "Comece por aqui"}</b><small>{patients.length ? "Use os dados para manter a agenda organizada." : "Cadastre seu primeiro paciente para iniciar."}</small></p></div><div><span className="insight-icon neutral"><Icon name="calendar" size={16} /></span><p><b>{appointments.length ? "Agenda em andamento" : "Dia livre"}</b><small>{appointments.length ? "Confira seus horários antes do próximo atendimento." : "Inclua uma consulta quando estiver pronto."}</small></p></div></div></section></div>
     <section className="panel patients-panel"><header><div><p className="section-kicker">PACIENTES</p><h2>Cadastros recentes</h2><p>Últimos pacientes adicionados à clínica</p></div><button onClick={goPatients} className="text-action">Ver todos <Icon name="arrow" size={14} /></button></header><PatientRows patients={patients.slice(0, 4)} /></section>
   </>;
 }

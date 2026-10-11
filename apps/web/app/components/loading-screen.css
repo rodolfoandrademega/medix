@@ -1,0 +1,17 @@
+.mx-loading { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; gap: 32px; background: #fdfcf9; color: #292438; font-family: 'DM Sans', sans-serif; }
+.mx-loading-brand { display: flex; align-items: center; gap: 9px; font-size: 28px; font-weight: 700; letter-spacing: -1.4px; }
+.mx-loading-brand>span { display: grid; place-items: center; position: relative; width: 35px; height: 35px; border-radius: 10px; background: #bda6ee; color: #2e2441; font-size: 29px; letter-spacing: -3px; padding-right: 4px; padding-bottom: 3px; line-height: 1; }
+.mx-loading-brand small { position: absolute; font-size: 12px; right: 3px; top: 2px; }
+.mx-loading-card { width: min(100%, 460px); padding: 38px 28px 25px; border: 1px solid #e8e2ed; border-radius: 20px; background: #fff; text-align: center; box-shadow: 0 16px 45px #39264808; }
+.mx-loading-symbol { width: 65px; height: 65px; display: grid; place-items: center; border-radius: 18px; background: #eee8f8; color: #8264b7; margin: 0 auto 24px; }
+.mx-loading-symbol>span { width: 26px; height: 26px; border: 2px solid #d9c9ee; border-top-color: #7051e8; border-radius: 50%; animation: mx-loading-spin 1s linear infinite; }
+.mx-loading-symbol.error { background: #f6eee6; color: #94754f; font-size: 26px; }
+.mx-loading-kicker { font-size: 9px!important; letter-spacing: 1.4px; color: #9b7bbe!important; }
+.mx-loading h1 { font-size: 29px; font-weight: 500; letter-spacing: -1px; line-height: 1.25; margin: 14px 0; }
+.mx-loading-card>p { font-size: 13px; line-height: 1.8; color: #787180; overflow-wrap: anywhere; }
+.mx-loading button { display: flex; justify-content: space-between; gap: 15px; width: 100%; margin-top: 24px; min-height: 48px; padding: 14px 18px; border: 0; border-radius: 9px; background: #7051e8; color: #fff; font: 500 12px 'DM Sans', sans-serif; cursor: pointer; }
+.mx-loading-note { margin-top: 28px; border-top: 1px solid #ece6ef; padding-top: 20px; color: #918597; font-size: 10px; line-height: 1.8; }
+@keyframes mx-loading-spin { to { transform: rotate(360deg); } }
+@media(prefers-reduced-motion: reduce) { .mx-loading-symbol>span { animation: none; } }
+.mx-return-link { display: inline-flex; align-items: center; justify-content: center; gap: 20px; margin-top: 20px; min-height: 44px; padding: 12px 20px; border-radius: 11px; background: #7051e8; color: #fff; font-size: 13px; }
+.mx-return-link:focus-visible { outline: 3px solid #b7a2f4; outline-offset: 4px; }

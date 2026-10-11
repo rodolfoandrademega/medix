@@ -25,6 +25,16 @@ frontend e `service_role` na API.
 Não execute `001_initial_schema.sql` novamente em um banco que já está em produção.
 Não execute nenhuma migration de corte para Firebase.
 
+Para o cadastro de clínicas pela API, execute no SQL Editor também a migration
+`020_clinic_onboarding_api_permissions.sql`. Ela concede ao papel de servidor
+`service_role` as leituras e inserções necessárias, sem alterar RLS ou conceder
+permissões adicionais aos usuários do navegador. As migrations 018 e 019
+continuam necessárias para as operações do super admin.
+
+Execute também `021_selected_clinic_team_permissions.sql` para permitir que a API
+atualize funções, permissões e alertas dos colaboradores da clínica selecionada.
+Ela não amplia os acessos de `anon` ou `authenticated`.
+
 Em **Authentication > URL Configuration**, configure:
 
 ```text
