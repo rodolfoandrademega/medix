@@ -2,6 +2,18 @@
 
 Esta configuração usa a API na Vercel, Supabase Cron/Vault e Web Push. Não requer Google Cloud nem provedor de WhatsApp/e-mail. O consumo continua sujeito aos limites dos planos de hospedagem e do banco; a entrega pelo sistema operacional não é garantida ou instantânea.
 
+## Configuração automatizada
+
+Depois da migration 023, faça login na CLI (`npx vercel login`) e execute `supabase/setup/push_cron.sql` no SQL Editor. O script gera o segredo diretamente no Vault, não mostra seu valor e prepara a rotina. A função auxiliar de configuração fica acessível somente ao `service_role` e lê apenas o segredo deste job.
+
+Com as credenciais existentes da API em `apps/api/.env.local`, rode na raiz:
+
+```sh
+node --env-file=apps/api/.env.local apps/api/scripts/configure-push.mjs
+```
+
+Ele gera/preserva o par VAPID em `apps/api/.env.push-keys.local` (privado, ignorado pelo Git), busca o segredo específico do Vault e cadastra as quatro variáveis em **medix-api / Production**, sem imprimir valores. Depois, faça o redeploy da API e confira o job. Não envie o arquivo privado pelo chat nem pelo Git. A configuração manual abaixo é uma alternativa; não gere outro par se já usou o script automatizado.
+
 ## 1. Banco
 
 No SQL Editor do Supabase de produção, execute todo o arquivo `supabase/migrations/023_pwa_push_notifications.sql`.

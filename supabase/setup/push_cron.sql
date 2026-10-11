@@ -1,7 +1,23 @@
--- Execute SOMENTE após a migration 023, as variáveis da API e o secret no Vault.
--- Ative pg_cron e pg_net em Database > Extensions antes.
--- Vault: crie medix_push_cron_secret com o MESMO valor de PUSH_CRON_SECRET.
--- Não salve o valor desse secret neste arquivo, no Git ou no chat.
+-- Execute após a migration 023. Não precisa copiar ou informar nenhuma chave.
+-- Este script cria o secret diretamente no Vault e prepara o job.
+create extension if not exists pg_cron with schema pg_catalog;
+create extension if not exists pg_net with schema extensions;
+do $$
+begin
+  if not exists (select 1 from vault.secrets where name='medix_push_cron_secret') then
+    perform vault.create_secret(encode(extensions.gen_random_bytes(32),'hex'),'medix_push_cron_secret','Assinatura restrita do job de push Medix');
+  end if;
+end;
+$$;
+
+-- Somente o backend pode obter o secret específico para cadastrá-lo na Vercel.
+-- Nenhum acesso para anon/authenticated nem acesso a outros secrets do Vault.
+create or replace function public.medix_push_setup_secret()
+returns text language sql security definer set search_path=public as $$
+  select decrypted_secret from vault.decrypted_secrets where name='medix_push_cron_secret' limit 1;
+$$;
+revoke all on function public.medix_push_setup_secret() from public,anon,authenticated;
+grant execute on function public.medix_push_setup_secret() to service_role;
 create or replace function public.dispatch_medix_push()
 returns void language plpgsql security definer
 set search_path=public,extensions,pg_catalog as $$
