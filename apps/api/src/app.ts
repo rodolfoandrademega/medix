@@ -8,6 +8,7 @@ import { registerWorkspaceRoutes } from "./routes/workspace.js";
 import { registerClinicDataRoutes } from "./routes/clinic-data.js";
 import { registerOperationRoutes } from "./routes/operations.js";
 import { registerAdminRoutes } from "./routes/admin.js";
+import { registerPushRoutes } from "./routes/push.js";
 
 export async function buildApp() {
   const app = Fastify({ logger: true });
@@ -24,6 +25,7 @@ export async function buildApp() {
   await registerClinicDataRoutes(app);
   await registerOperationRoutes(app);
   await registerAdminRoutes(app);
+  await registerPushRoutes(app);
 
   app.get("/v1/me", { preHandler: requireUser }, async (request) => {
     const { userId } = request as typeof request & { userId: string };

@@ -1,5 +1,5 @@
 import type { IncomingHttpHeaders } from "node:http";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest, VercelResponse } from "../src/vercel-types.js";
 import type { InjectOptions } from "light-my-request";
 import { buildApp } from "../src/app.js";
 

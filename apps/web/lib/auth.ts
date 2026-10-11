@@ -1,7 +1,12 @@
 import { supabase } from "./supabase";
+import { disablePush } from "./push";
 
 export async function signIn(email: string, password: string) {
   if (!supabase) throw new Error("A autenticação ainda não foi configurada.");
+  const current = await supabase.auth.getSession();
+  if (current.data.session && current.data.session.user.email?.toLowerCase() !== email.trim().toLowerCase()) {
+    await disablePush().catch(() => undefined);
+  }
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
 }
@@ -14,6 +19,8 @@ export async function signUp(fullName: string, email: string, password: string) 
 }
 
 export async function signOut() {
+  // O logout também desvincula o dispositivo dos avisos desta conta.
+  await disablePush().catch(() => undefined);
   const result = await supabase?.auth.signOut();
   if (result?.error) throw result.error;
 }

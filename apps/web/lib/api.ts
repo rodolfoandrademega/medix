@@ -30,6 +30,11 @@ export async function publicApi<T>(path: string, init: RequestInit = {}): Promis
 
 async function accessToken() {
   const { data } = await supabase?.auth.getSession() || { data: { session: null } };
+  if (data.session?.expires_at && data.session.expires_at <= Date.now() / 1000 + 60 && supabase) {
+    const refreshed = await supabase.auth.refreshSession();
+    if (refreshed.error) throw new ApiError("Não foi possível renovar sua sessão. Entre novamente.", 401);
+    return refreshed.data.session;
+  }
   return data.session;
 }
 

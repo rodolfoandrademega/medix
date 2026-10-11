@@ -187,3 +187,7 @@ O sino mostra novos agendamentos dos últimos 7 dias e avisos de proximidade (5,
 Alertas do navegador são opcionais por conta, clínica e dispositivo. Não exibem nome do paciente; detalhes ficam no painel autenticado.
 Preferências e IDs de avisos lidos ficam no dispositivo, sem guardar informações clínicas no armazenamento local.
 Não há envio por WhatsApp/e-mail ou push com o aplicativo fechado nesta versão. Agendamentos antigos precisam ter os destinatários selecionados em seus detalhes.
+
+### Ativar push com a PWA fechada
+
+O suporte opcional a Web Push está descrito em [PWA_PUSH.md](PWA_PUSH.md). Exige migration 023, chaves VAPID e rotina no Supabase Cron; sem essas configurações, continua usando os avisos com painel aberto. O login permanece persistente com renovação da sessão, sujeito às políticas do Supabase e do dispositivo.
