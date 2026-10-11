@@ -1,17 +1,76 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { api } from "../../lib/api";
+import { api, ApiError } from "../../lib/api";
+import { supabase } from "../../lib/supabase";
 import "./appointment-notifications.css";
 
-type Reminder = { id: string; starts_at: string; patients: { full_name: string } | null; procedures: { name: string } | null };
-const storageKey = "medix-appointment-reminders";
+type Notice = { id: string; kind: string; starts_at: string; ends_at: string; occurred_at: string; patient: string; procedure: string };
+type Preferences = { enabled: boolean; advance: number; read: string[]; delivered: string[] };
+const defaults: Preferences = { enabled: false, advance: 30, read: [], delivered: [] };
+const dateTime = (value: string) => new Date(value).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 export function AppointmentNotifications({ clinic }: { clinic: string }) {
-  const [open, setOpen] = useState(false); const [enabled, setEnabled] = useState(false); const [advance, setAdvance] = useState(30); const [message, setMessage] = useState("");
-  useEffect(() => { const saved = window.localStorage.getItem(storageKey); if (saved) { const config = JSON.parse(saved) as { enabled?: boolean; advance?: number }; setEnabled(Boolean(config.enabled)); setAdvance(config.advance || 30); } }, []);
-  useEffect(() => { window.localStorage.setItem(storageKey, JSON.stringify({ enabled, advance })); }, [enabled, advance]);
-  useEffect(() => { if (!enabled || typeof Notification === "undefined" || Notification.permission !== "granted") return; async function check() { const now = new Date(); const end = new Date(now.getTime() + advance * 60000); try { const result = await api<{ appointments: Reminder[] }>(`/v1/appointments?reminders=true&from=${encodeURIComponent(now.toISOString())}&to=${encodeURIComponent(end.toISOString())}`); result.appointments.forEach((reminder) => { const sentKey = `medix-reminder-${reminder.id}-${reminder.starts_at}`; if (window.sessionStorage.getItem(sentKey)) return; const time = new Date(reminder.starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); new Notification("Agendamento próximo", { body: `${reminder.patients?.full_name || "Paciente"} às ${time}${reminder.procedures?.name ? ` · ${reminder.procedures.name}` : ""}`, icon: "/icon" }); window.sessionStorage.setItem(sentKey, "1"); }); } catch { /* A próxima verificação tentará novamente. */ } } void check(); const timer = window.setInterval(check, 60000); return () => window.clearInterval(timer); }, [clinic, enabled, advance]);
-  async function activate() { if (typeof Notification === "undefined") return setMessage("Seu navegador não oferece notificações."); const permission = await Notification.requestPermission(); if (permission !== "granted") return setMessage("Permissão não concedida. Libere as notificações nas configurações do navegador."); setEnabled(true); setMessage("Lembretes ativados."); }
-  return <div className="notification-control"><button className={enabled ? "notification-bell enabled" : "notification-bell"} aria-label="Configurar lembretes" onClick={() => setOpen((current) => !current)}>🔔</button>{open && <section className="notification-popover"><b>Lembretes de agenda</b><p>Receba um aviso antes dos seus próximos atendimentos.</p><label>Antecedência<select value={advance} onChange={(event) => setAdvance(Number(event.target.value))}><option value={15}>15 minutos</option><option value={30}>30 minutos</option><option value={60}>1 hora</option></select></label>{enabled ? <button className="notification-disable" onClick={() => { setEnabled(false); setMessage("Lembretes desativados."); }}>Desativar lembretes</button> : <button className="button" onClick={activate}>Ativar notificações</button>}{message && <small>{message}</small>}</section>}</div>;
+  const [open, setOpen] = useState(false), [preferences, setPreferences] = useState<Preferences>(defaults);
+  const [key, setKey] = useState(""), [notices, setNotices] = useState<Notice[]>([]), [message, setMessage] = useState(""), [error, setError] = useState(""), [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    setKey(""); setNotices([]); setPreferences(defaults); setMessage(""); setError(""); setLoading(true);
+    void (async () => {
+      const session = await supabase?.auth.getSession();
+      if (cancelled || !session?.data.session) return;
+      const storageKey = `medix-notifications:${session.data.session.user.id}:${clinic}`;
+      let saved = defaults;
+      try { const raw = JSON.parse(localStorage.getItem(storageKey) || "null"); if (raw) saved = { enabled: raw.enabled === true, advance: [5,15,30,60].includes(raw.advance) ? raw.advance : 30, read: Array.isArray(raw.read) ? raw.read.filter((id: unknown) => typeof id === "string").slice(-500) : [], delivered: Array.isArray(raw.delivered) ? raw.delivered.filter((id: unknown) => typeof id === "string").slice(-500) : [] }; } catch { /* Preferências inválidas: usa o padrão seguro. */ }
+      setPreferences(saved); setKey(storageKey);
+    })();
+    return () => { cancelled = true; };
+  }, [clinic]);
+  useEffect(() => { if (key) { try { localStorage.setItem(key, JSON.stringify(preferences)); } catch { /* A central funciona sem armazenamento. */ } } }, [key, preferences]);
+  useEffect(() => {
+    if (!key) return;
+    let cancelled = false, fetching = false;
+    async function check() {
+      if (fetching) return; fetching = true;
+      try {
+        const result = await api<{ notifications: Notice[] }>(`/v1/appointment-notifications?advance=${preferences.advance}`);
+        if (!cancelled) { setNotices(result.notifications); setError(""); }
+      } catch (caught) {
+        if (!cancelled) { setNotices([]); setError(caught instanceof ApiError && caught.status === 403 ? "Os avisos de agendamento exigem acesso à agenda." : "Não foi possível atualizar os avisos. Tentaremos novamente."); }
+      } finally { fetching = false; if (!cancelled) setLoading(false); }
+    }
+    void check(); const timer = window.setInterval(check, 20000);
+    const onFocus = () => { void check(); };
+    window.addEventListener("focus", onFocus); window.addEventListener("medix-appointment-changed", onFocus);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener("focus", onFocus); window.removeEventListener("medix-appointment-changed", onFocus); };
+  }, [key, preferences.advance]);
+  useEffect(() => {
+    if (!key || !preferences.enabled || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    const sent: string[] = [];
+    for (const notice of notices) {
+      if (preferences.delivered.includes(notice.id) || preferences.read.includes(notice.id)) continue;
+      if (notice.kind === "created" && Date.parse(notice.occurred_at) < Date.now() - 120000) continue;
+      try {
+        new Notification(notice.kind === "upcoming" ? "Seu agendamento está próximo" : "Novo agendamento na Medix", { body: `Atendimento em ${dateTime(notice.starts_at)}. Abra a Medix para consultar os detalhes.`, icon: "/icon", tag: notice.id });
+        sent.push(notice.id);
+      } catch { setMessage("Use a central de avisos neste dispositivo. O navegador não permite alertas do sistema."); }
+    }
+    if (sent.length) setPreferences(current => ({ ...current, delivered: [...new Set([...current.delivered, ...sent])].slice(-500) }));
+  }, [notices, key, preferences]);
+  async function activate() {
+    if (typeof Notification === "undefined") return setMessage("Seu navegador não oferece alertas do sistema. Os avisos continuam disponíveis no sino.");
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return setMessage("Permissão não concedida. Você ainda pode acompanhar os avisos no sino.");
+      setPreferences(current => ({ ...current, enabled: true })); setMessage("Alertas ativados neste dispositivo enquanto o painel estiver aberto.");
+    } catch { setMessage("Não foi possível ativar. Use a central de avisos no sino."); }
+  }
+  const unread = notices.filter(notice => !preferences.read.includes(notice.id)).length;
+  return <div className="notification-control"><button className="notification-bell" aria-label={`Notificações${unread ? `, ${unread} não lidas` : ""}`} aria-expanded={open} onClick={() => setOpen(current => !current)}>🔔{unread > 0 && <span className="notification-count">{unread > 99 ? "99+" : unread}</span>}</button>
+    {open && <section className="notification-popover" aria-label="Central de notificações"><div className="notification-heading"><b>Seus avisos de agenda</b><button type="button" aria-label="Fechar notificações" onClick={() => setOpen(false)}>×</button></div><p>Novos agendamentos e lembretes direcionados a você.</p>
+      <label>Avisar antes do horário<select value={preferences.advance} onChange={event => setPreferences(current => ({ ...current, advance: Number(event.target.value) }))}><option value={5}>5 minutos</option><option value={15}>15 minutos</option><option value={30}>30 minutos</option><option value={60}>1 hora</option></select></label>
+      {error ? <p role="alert">{error}</p> : loading ? <p>Buscando avisos…</p> : <><div className="notification-list">{notices.length ? notices.map(notice => <article key={notice.id} className={preferences.read.includes(notice.id) ? "read" : "unread"}><strong>{notice.kind === "upcoming" ? "O horário está chegando" : "Novo agendamento"}</strong><b>{notice.patient}</b><span>{dateTime(notice.starts_at)} · {notice.procedure}</span><small>Até {new Date(notice.ends_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</small>{!preferences.read.includes(notice.id) && <button type="button" onClick={() => setPreferences(current => ({ ...current, read: [...current.read, notice.id].slice(-500) }))}>Marcar como lido</button>}</article>) : <p>Nenhum aviso por enquanto. Você recebe avisos dos agendamentos em que foi selecionado.</p>}</div>{unread > 0 && <button className="notification-disable" onClick={() => setPreferences(current => ({ ...current, read: [...new Set([...current.read, ...notices.map(notice => notice.id)])].slice(-500) }))}>Marcar todos como lidos</button>}</>}
+      {preferences.enabled ? <button className="notification-disable" onClick={() => setPreferences(current => ({ ...current, enabled: false }))}>Desativar alertas neste dispositivo</button> : <button className="button" disabled={!key} onClick={activate}>Ativar alertas do navegador</button>}
+      <small>O painel precisa permanecer aberto. Sem envio por WhatsApp ou e-mail. Por privacidade, os alertas do sistema não mostram o nome do paciente.</small>{message && <small role="status">{message}</small>}
+    </section>}
+  </div>;
 }

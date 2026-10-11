@@ -12,6 +12,7 @@ import { ProceduresWorkspace, type Procedure } from "./procedures-workspace";
 import { AgendaWorkspace } from "./agenda-workspace";
 import { TeamWorkspace } from "./team-workspace";
 import { AppointmentNotifications } from "./appointment-notifications";
+import { AppointmentRecipients } from "./appointment-recipients";
 import "../globals.css";
 import "../mobile.css";
 import "./dashboard.css";
@@ -256,7 +257,8 @@ function AppointmentForm({ clinic, patients, close, done }: { clinic: string; pa
   const initialDate = new Date();
   initialDate.setMinutes(Math.ceil(initialDate.getMinutes() / 30) * 30, 0, 0);
   const [patientId, setPatientId] = useState("");
-  const [startsAt, setStartsAt] = useState(initialDate.toISOString().slice(0, 16));
+  const [startsAt, setStartsAt] = useState(new Date(initialDate.getTime() - initialDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+  const [recipients, setRecipients] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [procedureId, setProcedureId] = useState("");
@@ -276,8 +278,8 @@ function AppointmentForm({ clinic, patients, close, done }: { clinic: string; pa
     const end = new Date(start.getTime() + duration * 60 * 1000);
     try { await api("/v1/appointments", { method: "POST", body: JSON.stringify({
       patient_id: patientId, starts_at: start.toISOString(), ends_at: end.toISOString(),
-      status: "scheduled", notes: notes.trim() || null, duration_minutes: duration, procedure_id: procedureId || null,
-    }) }); done(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Erro ao criar agendamento."); } finally { setSaving(false); }
+      status: "scheduled", notes: notes.trim() || null, duration_minutes: duration, procedure_id: procedureId || null, notification_recipients: recipients,
+    }) }); window.dispatchEvent(new Event("medix-appointment-changed")); done(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Erro ao criar agendamento."); } finally { setSaving(false); }
   }
 
   return <div className="modal-backdrop">
@@ -291,6 +293,7 @@ function AppointmentForm({ clinic, patients, close, done }: { clinic: string; pa
         <label>Procedimento <small>Opcional</small><select value={procedureId} onChange={(event) => setProcedureId(event.target.value)}><option value="">Sem procedimento definido</option>{procedures.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.duration_minutes} min{item.price !== null ? ` · R$ ${Number(item.price).toFixed(2).replace(".", ",")}` : ""}</option>)}</select></label>
         <label>Data e horário <strong>*</strong><input required type="datetime-local" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} /></label>
         <label>Observações <small>Opcional</small><input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex.: primeira consulta" /></label>
+        <AppointmentRecipients clinic={clinic} value={recipients} onChange={setRecipients} disabled={saving} />
         {error && <div className="auth-feedback">{error}</div>}
         <button disabled={saving} className="button">{saving ? "Salvando..." : "Confirmar agendamento"} <span>→</span></button>
       </>}

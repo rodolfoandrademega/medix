@@ -1,1 +1,22 @@
 .notification-control{position:relative}.notification-bell{width:33px;height:33px;border:1px solid #e4e0ea;border-radius:50%;background:#fff;color:#736d7a;font-size:19px;cursor:pointer}.notification-bell.enabled{border-color:#cfc4ff;background:#f0edff;color:#684bd2}.notification-popover{position:absolute;right:0;top:42px;z-index:30;width:255px;padding:16px;border:1px solid #e5e0ec;border-radius:11px;background:#fff;box-shadow:0 16px 35px #211b341f}.notification-popover b{font-size:12px}.notification-popover p{margin:5px 0 13px;color:#857f8b;font-size:10px;line-height:1.45}.notification-popover label{display:block;color:#615b67;font-size:10px;font-weight:700}.notification-popover select{display:block;width:100%;margin-top:5px;padding:8px;border:1px solid #e6e1ea;border-radius:6px;background:#fff;font:11px "DM Sans"}.notification-popover .button,.notification-disable{width:100%;margin-top:13px;padding:9px;border-radius:7px;font:700 10px "DM Sans"}.notification-disable{border:1px solid #eadce0;background:#fff;color:#b44a57}.notification-popover small{display:block;margin-top:9px;color:#7155e8;font-size:9px;line-height:1.4}
+.app-shell .notification-bell { position: relative; }
+.notification-count { position: absolute; top: -5px; right: -5px; min-width: 18px; padding: 2px 4px; border-radius: 20px; background: #8463a7; color: white; font-size: 10px; }
+.app-shell .notification-control .notification-popover { width: min(360px,calc(100vw - 32px)); max-height: calc(100dvh - 110px); overflow-y: auto; }
+.notification-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.notification-heading button { width: 32px; height: 32px; border: 0; background: transparent; color: #8463a7; font-size: 22px; cursor: pointer; }
+.notification-list { max-height: 280px; overflow-y: auto; margin-top: 14px; }
+.notification-list article { display: grid; gap: 6px; padding: 12px; margin-bottom: 8px; border: 1px solid #e8def0; border-radius: 10px; background: #f1eaf7; text-align: left; }
+.notification-list article.read { background: #fdfcf9; }
+.notification-list article strong { color: #8463a7; font-size: 11px; }
+.notification-list article span { font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.notification-list article button,.appointment-recipients > button { padding: 6px 8px; background: #fdfcf9; border: 1px solid #e8def0; border-radius: 6px; color: #8463a7; cursor: pointer; font-size: 12px; }
+.appointment-recipients { margin: 18px 0; padding: 14px; border: 1px solid #e8def0; border-radius: 12px; min-width: 0; }
+.appointment-recipients legend { color: #554663; font-size: 14px; }
+.appointment-details { max-height: calc(100dvh - 40px); overflow-y: auto; }
+.appointment-recipients p { font-size: 12px; line-height: 1.6; margin: 0 0 10px; color: #82788e; }
+.recipient-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); max-height: 180px; overflow-y: auto; gap: 8px; margin-top: 10px; }
+.appointment-recipients .recipient-options label { display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px; border-radius: 8px; background: #f1eaf7; font-size: 12px; font-weight: 500; }
+.appointment-recipients .recipient-options input { width: 18px; height: 18px; margin: 0; flex-shrink: 0; accent-color: #8463a7; }
+.recipient-options span { min-width: 0; overflow-wrap: anywhere; }
+.recipient-options small { display: block; font-size: 10px; color: #82788e; }
+@media(max-width:600px) { .recipient-options { grid-template-columns: 1fr; } .app-shell .notification-popover { position: fixed; top: 72px; right: 16px; } }

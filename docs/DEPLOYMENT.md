@@ -177,3 +177,13 @@ Se a autenticação funcionar, mas o console não abrir:
   clínicas, leitura de pacientes/agendamentos para backup e leitura/atualização
   do controle em `platform_settings`. A API verifica o super admin antes dessas
   operações; a migration não modifica as permissões de `anon`/`authenticated`.
+
+## Avisos internos de agendamento
+
+Execute a migration `022_appointment_notification_recipients.sql` antes de publicar esta versão.
+No agendamento (ou em seus detalhes), selecione os colaboradores que devem receber os avisos.
+A API aceita somente membros da clínica com acesso à agenda e bloqueia clínicas inativas/módulos desativados.
+O sino mostra novos agendamentos dos últimos 7 dias e avisos de proximidade (5, 15, 30 ou 60 minutos), atualizados a cada 20 segundos com o painel aberto.
+Alertas do navegador são opcionais por conta, clínica e dispositivo. Não exibem nome do paciente; detalhes ficam no painel autenticado.
+Preferências e IDs de avisos lidos ficam no dispositivo, sem guardar informações clínicas no armazenamento local.
+Não há envio por WhatsApp/e-mail ou push com o aplicativo fechado nesta versão. Agendamentos antigos precisam ter os destinatários selecionados em seus detalhes.
